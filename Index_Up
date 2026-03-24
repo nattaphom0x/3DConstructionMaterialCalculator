@@ -1,0 +1,2447 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<title>SMR Builder Pro v3 — Construction 3D</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Sarabun:wght@300;400;600;700&display=swap');
+:root{
+  --bg:#0d0f13;--surface:#161a22;--panel:#1c2130;--border:#2a3044;
+  --accent:#f0a500;--accent2:#3b82f6;--green:#22c55e;--red:#ef4444;
+  --purple:#a855f7;--orange:#fb923c;--text:#e2e8f0;--muted:#64748b;
+  --font:'Sarabun',sans-serif;--mono:'JetBrains Mono',monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:var(--font);overflow:hidden;user-select:none}
+
+/* TASKBAR */
+#taskbar{position:fixed;top:0;left:0;right:0;height:40px;z-index:200;
+  background:var(--surface);border-bottom:1px solid var(--border);
+  display:flex;align-items:center;padding:0 10px;gap:4px;
+  box-shadow:0 2px 16px rgba(0,0,0,.5);overflow-x:auto}
+.logo{font-family:var(--mono);font-size:12px;font-weight:700;color:var(--accent);
+  margin-right:8px;letter-spacing:1px;white-space:nowrap;flex-shrink:0}
+.tb-sep{width:1px;height:20px;background:var(--border);margin:0 3px;flex-shrink:0}
+.tb-btn{background:transparent;border:1px solid transparent;color:var(--muted);
+  padding:3px 8px;font-size:11px;font-family:var(--font);cursor:pointer;
+  border-radius:4px;transition:.15s;white-space:nowrap;flex-shrink:0}
+.tb-btn:hover{background:var(--panel);color:var(--text);border-color:var(--border)}
+.tb-btn.on{background:var(--accent);color:#000;border-color:var(--accent);font-weight:700}
+.tb-btn.save{background:var(--green);color:#000;border-color:var(--green);font-weight:700}
+.tb-btn.load{background:var(--accent2);color:#fff;border-color:var(--accent2);font-weight:700}
+.tb-btn:disabled{opacity:.35;cursor:not-allowed}
+#tb-right{margin-left:auto;display:flex;align-items:center;gap:6px;flex-shrink:0}
+#dpt-badge{font-size:10px;font-family:var(--mono);padding:2px 8px;
+  background:rgba(34,197,94,.15);color:var(--green);border:1px solid rgba(34,197,94,.3);
+  border-radius:99px;white-space:nowrap}
+
+/* PANELS */
+.panel{position:fixed;z-index:100;background:var(--panel);border:1px solid var(--border);
+  border-radius:8px;box-shadow:0 8px 32px rgba(0,0,0,.6);display:flex;flex-direction:column;
+  min-width:200px;min-height:80px;overflow:hidden}
+.panel-head{padding:7px 10px;display:flex;justify-content:space-between;align-items:center;
+  cursor:move;border-bottom:1px solid var(--border);flex-shrink:0;background:rgba(255,255,255,.03)}
+.panel-title{font-size:11px;font-weight:700;color:var(--text);display:flex;align-items:center;gap:6px;letter-spacing:.5px}
+.dot{width:8px;height:8px;border-radius:50%;display:inline-block}
+.panel-btns{display:flex;gap:4px}
+.ph-btn{width:16px;height:16px;border-radius:3px;border:none;cursor:pointer;font-size:9px;
+  display:flex;align-items:center;justify-content:center;color:#fff}
+.ph-min{background:#f59e0b}.ph-close{background:#ef4444}
+.panel-body{padding:8px;overflow-y:auto;flex:1}
+
+/* FORM ELEMENTS */
+.sec{font-size:10px;font-weight:700;letter-spacing:1.5px;color:var(--muted);
+  text-transform:uppercase;margin:10px 0 5px}
+.sec:first-child{margin-top:0}
+button.ui-btn{width:100%;padding:6px 10px;font-size:11px;font-family:var(--font);
+  background:var(--surface);border:1px solid var(--border);color:var(--text);
+  cursor:pointer;border-radius:5px;transition:.15s;margin-bottom:4px;text-align:left}
+button.ui-btn:hover{background:var(--border);color:#fff}
+button.ui-btn.active{background:var(--accent);color:#000;border-color:var(--accent);font-weight:700}
+button.ui-btn.primary{background:var(--accent2);border-color:var(--accent2);color:#fff;font-weight:700}
+button.ui-btn.success{background:var(--green);border-color:var(--green);color:#000;font-weight:700}
+button.ui-btn.danger{background:var(--red);border-color:var(--red);color:#fff;font-weight:700}
+button.ui-btn.purple{background:var(--purple);border-color:var(--purple);color:#fff;font-weight:700}
+button.ui-btn.orange{background:var(--orange);border-color:var(--orange);color:#000;font-weight:700}
+input[type=text],input[type=number],select{width:100%;padding:4px 7px;font-size:11px;
+  font-family:var(--font);background:var(--surface);border:1px solid var(--border);
+  color:var(--text);border-radius:4px;margin-bottom:5px;outline:none;transition:.15s}
+input:focus,select:focus{border-color:var(--accent2)}
+input[type=color]{width:100%;height:26px;padding:0;border:none;margin-bottom:5px;cursor:pointer;border-radius:4px}
+label{font-size:10px;color:var(--muted);display:block;margin-bottom:2px}
+.row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px;margin-bottom:5px}
+.row3 input{margin-bottom:0}
+.row2g{display:grid;grid-template-columns:1fr 1fr;gap:5px}
+.row2g>div label{margin-bottom:2px}
+.toggle-row{display:flex;align-items:center;justify-content:space-between;
+  background:var(--surface);border:1px solid var(--border);border-radius:5px;
+  padding:5px 8px;margin-bottom:5px}
+.toggle-row span{font-size:11px}
+.toggle-row input[type=checkbox]{width:auto;margin:0;cursor:pointer;accent-color:var(--accent)}
+hr.sep{border:none;border-top:1px solid var(--border);margin:7px 0}
+
+/* PROPS BOX */
+#props-box{display:none;background:rgba(59,130,246,.06);border:1px solid rgba(59,130,246,.25);
+  border-radius:6px;padding:7px;margin-bottom:7px}
+#props-box .props-title{font-size:10px;font-weight:700;color:var(--accent2);margin-bottom:5px}
+
+/* OUTLINER */
+#obj-list{list-style:none}
+#obj-list li{padding:4px 5px;font-size:11px;cursor:pointer;border-radius:4px;
+  display:flex;justify-content:space-between;align-items:center;
+  border-bottom:1px solid var(--border);transition:.1s}
+#obj-list li:hover{background:var(--surface)}
+#obj-list li.sel{background:rgba(240,165,0,.15);color:var(--accent);border-color:rgba(240,165,0,.3)}
+#obj-list li.air-sel{background:rgba(59,130,246,.15);color:var(--accent2);border-color:rgba(59,130,246,.3)}
+.obj-name{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.obj-icons{display:flex;gap:3px;flex-shrink:0}
+.oi{cursor:pointer;opacity:.6;font-size:12px;padding:1px 3px;border-radius:2px}
+.oi:hover{opacity:1;background:rgba(255,255,255,.1)}
+
+/* DIM LABELS */
+.dim-inp{width:46px;padding:2px 0;text-align:center;font-family:var(--mono);
+  font-size:11px;font-weight:700;border-radius:3px;outline:none;pointer-events:auto;border:2px solid}
+.dim-inp.dx{border-color:#f87171;color:#fca5a5;background:rgba(248,113,113,.15)}
+.dim-inp.dy{border-color:#4ade80;color:#86efac;background:rgba(74,222,128,.15)}
+.dim-inp.dz{border-color:#60a5fa;color:#93c5fd;background:rgba(96,165,250,.15)}
+.dim-inp:focus{background:#fff;color:#000;border-color:var(--accent)!important}
+
+/* FILTER */
+.filter-wrap{display:flex;flex-wrap:wrap;gap:3px;margin-bottom:7px}
+.fchip{font-size:10px;padding:2px 7px;border-radius:99px;cursor:pointer;
+  background:var(--surface);border:1px solid var(--border);color:var(--muted);transition:.15s}
+.fchip:hover{border-color:var(--muted);color:var(--text)}
+.fchip.on{background:var(--accent);color:#000;border-color:var(--accent);font-weight:700}
+
+/* PLANE BOX */
+#plane-box{display:none;background:var(--surface);border:1px dashed var(--border);border-radius:5px;padding:7px;margin-bottom:5px}
+.plane-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:3px;margin-bottom:5px}
+
+/* BOM */
+.calc-block{background:var(--surface);border-radius:6px;padding:8px;margin-bottom:8px;border-left:3px solid var(--accent)}
+.calc-block h3{font-size:12px;margin-bottom:3px}
+.calc-block .sub{font-size:10px;color:var(--muted);margin-bottom:6px}
+table.res{width:100%;border-collapse:collapse;font-size:11px}
+table.res th{background:var(--panel);color:var(--accent);padding:4px 6px;text-align:left;font-size:10px;border:1px solid var(--border)}
+table.res td{border:1px solid var(--border);padding:4px 6px}
+table.res tr:nth-child(even) td{background:rgba(255,255,255,.02)}
+.compare-box{background:rgba(59,130,246,.06);border:1px solid rgba(59,130,246,.25);border-radius:5px;padding:7px;margin:6px 0;font-size:11px}
+.cx-title{font-size:10px;font-weight:700;color:var(--accent2);margin-bottom:4px}
+
+/* AIR BLOCK */
+.ab-item{display:flex;align-items:center;gap:5px;padding:4px 6px;
+  background:rgba(59,130,246,.08);border:1px solid rgba(59,130,246,.3);
+  border-radius:4px;margin-bottom:3px;font-size:11px;cursor:pointer}
+.ab-item.on{background:rgba(59,130,246,.25);border-color:var(--accent2)}
+
+/* REBAR */
+.rb-stat{display:grid;grid-template-columns:1fr 1fr;gap:3px;margin-bottom:6px}
+.rb-stat-cell{background:var(--surface);border-radius:4px;padding:4px 6px;font-size:11px}
+.rb-val{font-family:var(--mono);color:var(--accent);font-weight:700;font-size:12px}
+
+/* STRUCTURAL */
+.stress-legend{display:flex;align-items:center;gap:6px;margin-bottom:5px;font-size:10px}
+.stress-grad{flex:1;height:10px;border-radius:3px;background:linear-gradient(to right,#22c55e,#eab308,#ef4444);border:1px solid var(--border)}
+.bond-item{display:flex;align-items:center;gap:5px;padding:4px 7px;
+  background:var(--surface);border-radius:4px;margin-bottom:3px;font-size:11px}
+.bond-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+.load-bar-wrap{background:var(--surface);border-radius:4px;padding:4px 7px;margin-bottom:3px}
+.load-bar-label{display:flex;justify-content:space-between;font-size:10px;margin-bottom:2px}
+.load-bar{height:5px;border-radius:3px;transition:.4s}
+
+/* STATUS BAR */
+#statusbar{position:fixed;bottom:0;left:0;right:0;height:22px;z-index:200;
+  background:var(--surface);border-top:1px solid var(--border);
+  display:flex;align-items:center;padding:0 12px;gap:16px;font-size:10px;font-family:var(--mono)}
+#statusbar span{color:var(--muted)}
+#statusbar .hi{color:var(--accent)}
+
+/* CONTEXT MENU */
+#ctx-menu{position:fixed;z-index:500;background:var(--panel);border:1px solid var(--border);
+  border-radius:6px;padding:4px;box-shadow:0 8px 24px rgba(0,0,0,.6);display:none;min-width:160px}
+#ctx-menu div{padding:5px 10px;font-size:11px;cursor:pointer;border-radius:4px;display:flex;align-items:center;gap:7px}
+#ctx-menu div:hover{background:var(--border)}
+#ctx-menu hr{border:none;border-top:1px solid var(--border);margin:2px 0}
+
+/* SCROLLBAR */
+::-webkit-scrollbar{width:5px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:99px}
+
+/* GROUP STYLES */
+.group-header{padding:3px 6px;font-size:10px;font-weight:700;letter-spacing:.5px;
+  background:rgba(168,85,247,.12);border:1px solid rgba(168,85,247,.3);
+  border-radius:4px;margin-bottom:1px;cursor:pointer;display:flex;align-items:center;gap:5px;color:var(--purple)}
+.group-header:hover{background:rgba(168,85,247,.22)}
+.group-children{padding-left:10px;border-left:2px solid rgba(168,85,247,.3);margin-bottom:3px}
+#obj-list li.multi-sel{background:rgba(59,130,246,.18);border-color:rgba(59,130,246,.4);color:var(--accent2)}
+.sel-hint{font-size:9px;color:var(--muted);padding:3px 5px;text-align:center}
+</style>
+</head>
+<body>
+
+<!-- TASKBAR -->
+<div id="taskbar">
+  <div class="logo">⬛ SMR PRO v3</div>
+  <div class="tb-sep"></div>
+  <button class="tb-btn on" id="tb-tools"  onclick="togglePanel('p-tools')">🛠 Tools</button>
+  <button class="tb-btn on" id="tb-outline" onclick="togglePanel('p-outline')">📝 Outliner</button>
+  <button class="tb-btn"   id="tb-calc"   onclick="togglePanel('p-calc')">📊 BOM</button>
+  <button class="tb-btn"   id="tb-rebar"  onclick="togglePanel('p-rebar')">🔩 Rebar</button>
+  <button class="tb-btn"   id="tb-struct" onclick="togglePanel('p-struct')">📐 Structural</button>
+  <button class="tb-btn"   id="tb-mat"    onclick="togglePanel('p-mat')">🎨 Materials</button>
+  <button class="tb-btn"   id="tb-export" onclick="togglePanel('p-export')">📤 Export</button>
+  <div class="tb-sep"></div>
+  <button class="tb-btn" id="tb-undo" onclick="undoAction()" title="Ctrl+Z" disabled>↩ Undo</button>
+  <button class="tb-btn" id="tb-redo" onclick="redoAction()" title="Ctrl+Y" disabled>↪ Redo</button>
+  <div class="tb-sep"></div>
+  <button class="tb-btn save" onclick="saveProject()">💾 Save</button>
+  <button class="tb-btn load" onclick="document.getElementById('fi').click()">📂 Load</button>
+  <input type="file" id="fi" style="display:none" accept=".smr" onchange="loadProject(this)">
+  <div id="tb-right"><span id="dpt-badge">✓ มทอ.101-64</span></div>
+</div>
+
+<div id="canvas-wrap" style="position:fixed;inset:40px 0 22px 0"></div>
+<div id="toast" style="position:fixed;bottom:32px;left:50%;transform:translateX(-50%);
+  background:rgba(240,165,0,.95);color:#000;font-size:11px;font-weight:700;
+  padding:5px 16px;border-radius:99px;z-index:9999;font-family:var(--mono);
+  pointer-events:none;opacity:0;transition:opacity .3s"></div>
+
+<!-- CONTEXT MENU -->
+<div id="ctx-menu">
+  <div onclick="ctxDuplicate()">⧉ Duplicate (Ctrl+D)</div>
+  <div onclick="ctxFocus()">🎯 Focus Camera (F)</div>
+  <div onclick="ctxRename()">✎ Rename</div>
+  <hr>
+  <div onclick="ctxCalcSingle()">🔢 Calculate This</div>
+  <div onclick="ctxToggleBrick()">🧱 Toggle Brick View (B)</div>
+  <div onclick="ctxApplyRebarToCtx()">🔩 Apply Current Rebar</div>
+  <hr id="ctx-cut-sep" style="display:none">
+  <div id="ctx-cut-item" onclick="ctxCutWithSelected()" style="color:var(--accent2);display:none">✂️ Cut with Selected Air Block</div>
+  <div id="ctx-cut-group-sep" style="display:none"><hr></div>
+  <div id="ctx-cut-group-item" onclick="ctxCutBlockInGroup()" style="color:var(--accent2);display:none">✂️ Cut Block (same group)</div>
+  <hr>
+  <div onclick="ctxAddToBond()" style="color:var(--accent2)">🔗 Add to Bond Selection</div>
+  <hr id="ctx-group-sep">
+  <div onclick="ctxCreateGroupWithMultiSel()" style="color:var(--purple)">📁 Create Group (selected)</div>
+  <div id="ctx-remove-from-group-item" onclick="ctxRemoveFromGroup()" style="color:var(--muted);display:none">📂 Remove from Group</div>
+  <hr>
+  <div onclick="ctxDelete()" style="color:var(--red)">🗑 Delete (Del)</div>
+</div>
+
+<!-- ===== TOOLS PANEL ===== -->
+<div class="panel" id="p-tools" style="top:50px;left:12px;width:248px;height:620px">
+  <div class="panel-head" id="p-tools-head">
+    <div class="panel-title"><span class="dot" style="background:var(--accent)"></span>TOOLS</div>
+    <div class="panel-btns">
+      <button class="ph-btn ph-min" onclick="minPanel('p-tools')">_</button>
+      <button class="ph-btn ph-close" onclick="closePanel('p-tools','tb-tools')">×</button>
+    </div>
+  </div>
+  <div class="panel-body">
+    <div class="sec">เพิ่มวัตถุ</div>
+    <button class="ui-btn" onclick="addWall()">➕ Wall / Cube</button>
+    <button class="ui-btn" id="btn-draw" onclick="toggleDrawMode()">✎ Blueprint Drawing</button>
+    <div id="plane-box">
+      <div style="font-size:10px;color:var(--muted);margin-bottom:4px">เลือกระนาบ:</div>
+      <div class="plane-grid">
+        <button class="ui-btn" id="pl-xz" onclick="setPlane('XZ')" style="font-size:10px;padding:3px">XZ พื้น</button>
+        <button class="ui-btn" id="pl-xy" onclick="setPlane('XY')" style="font-size:10px;padding:3px">XY ผนัง</button>
+        <button class="ui-btn" id="pl-yz" onclick="setPlane('YZ')" style="font-size:10px;padding:3px">YZ ข้าง</button>
+      </div>
+      <button class="ui-btn success" style="margin-top:4px" onclick="finishExtrude()">✅ Finish & Extrude</button>
+      <button class="ui-btn danger" style="margin-top:0" onclick="toggleDrawMode(false)">✕ Cancel</button>
+    </div>
+
+    <!-- AIR BLOCK SECTION -->
+    <hr class="sep">
+    <div class="sec">Air Block (ช่องเปิด)</div>
+    <div style="font-size:10px;color:var(--muted);margin-bottom:5px">สร้าง Air Block ซ้อนผนัง → กด Apply เพื่อตัด BOM</div>
+    <button class="ui-btn" onclick="addAirBlock()" style="border-color:rgba(59,130,246,.5);color:var(--accent2)">🌬 Add Air Block</button>
+    <div id="air-size" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px;margin-bottom:5px">
+      <div><label>W (m)</label><input type="number" id="air-w" value="0.9" step="0.1" min="0.1"></div>
+      <div><label>H (m)</label><input type="number" id="air-h" value="2.0" step="0.1" min="0.1"></div>
+      <div><label>D (m)</label><input type="number" id="air-d" value="0.5" step="0.05" min="0.05"></div>
+    </div>
+    <div id="air-list" style="max-height:90px;overflow-y:auto;margin-bottom:5px"></div>
+    <button class="ui-btn success" onclick="applyAirCuts()">✅ Apply Cuts → Update BOM</button>
+
+    <hr class="sep">
+    <div class="sec">Transform</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:3px;margin-bottom:5px">
+      <button class="ui-btn" id="btn-move"  onclick="setMode('translate')">Move(T)</button>
+      <button class="ui-btn" id="btn-rot"   onclick="setMode('rotate')">Rot(E)</button>
+      <button class="ui-btn" id="btn-scale" onclick="setMode('scale')">Scale(R)</button>
+    </div>
+
+    <hr class="sep">
+    <div class="sec">Selected Object</div>
+    <div id="props-box">
+      <div class="props-title">📌 <span id="props-name">—</span></div>
+      <label>Material</label>
+      <select id="prop-mat"></select>
+      <label>Position X/Y/Z</label>
+      <div class="row3"><input type="number" id="px" step="0.1"><input type="number" id="py" step="0.1"><input type="number" id="pz" step="0.1"></div>
+      <label>Rotation° X/Y/Z</label>
+      <div class="row3"><input type="number" id="rx" step="15"><input type="number" id="ry" step="15"><input type="number" id="rz" step="15"></div>
+      <div class="toggle-row">
+        <span>🧱 Brick View</span>
+        <input type="checkbox" id="chk-brick">
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:3px;margin-top:3px">
+        <button class="ui-btn" style="margin:0;font-size:10px" onclick="copyObj()">📋 Copy</button>
+        <button class="ui-btn" style="margin:0;font-size:10px" onclick="pasteObj()">📌 Paste</button>
+        <button class="ui-btn" style="margin:0;font-size:10px" onclick="ctxDuplicate()">⧉ Dup</button>
+      </div>
+      <button class="ui-btn purple" onclick="calcSingle()" style="margin-top:3px">🔢 Calc This</button>
+    </div>
+
+    <hr class="sep">
+    <div class="sec">Options</div>
+    <div class="toggle-row"><span>🔲 Grid Snap 0.5m</span><input type="checkbox" id="chk-snap" checked></div>
+    <div class="toggle-row"><span>📐 Dimensions</span><input type="checkbox" id="chk-dim" checked></div>
+
+    <hr class="sep">
+    <div class="sec">Filter View</div>
+    <div class="filter-wrap" id="filter-wrap"></div>
+    <button class="ui-btn success" onclick="calcAll()">📊 Calculate BOM</button>
+  </div>
+</div>
+
+<!-- ===== OUTLINER ===== -->
+<div class="panel" id="p-outline" style="top:50px;right:12px;width:240px;height:460px">
+  <div class="panel-head" id="p-outline-head">
+    <div class="panel-title"><span class="dot" style="background:var(--accent2)"></span>OUTLINER</div>
+    <div class="panel-btns">
+      <button class="ph-btn ph-min" onclick="minPanel('p-outline')">_</button>
+      <button class="ph-btn ph-close" onclick="closePanel('p-outline','tb-outline')">×</button>
+    </div>
+  </div>
+  <div class="panel-body" style="padding:5px">
+    <div style="display:flex;gap:4px;margin-bottom:4px">
+      <input type="text" id="search-obj" placeholder="🔍 Search..." style="margin:0;flex:1" oninput="refreshList()">
+      <span id="obj-count" style="font-size:10px;color:var(--muted);white-space:nowrap;align-self:center;padding:0 3px"></span>
+    </div>
+    <div style="display:flex;gap:3px;margin-bottom:4px;flex-wrap:wrap">
+      <button class="ui-btn" style="margin:0;font-size:9px;padding:3px 6px;flex:1" onclick="selectAllObjects()" title="Shift+A">Shift+A All</button>
+      <button class="ui-btn" style="margin:0;font-size:9px;padding:3px 6px;flex:1" onclick="deselectAll()" title="Esc">Esc Clear</button>
+      <button class="ui-btn purple" style="margin:0;font-size:9px;padding:3px 6px;flex:1" onclick="createGroupFromMultiSel()" title="Group selected">📁 Group</button>
+    </div>
+    <div id="multi-hint" class="sel-hint">Ctrl/Shift+คลิกใน Outliner เพื่อเลือกหลายชิ้น</div>
+    <ul id="obj-list"></ul>
+  </div>
+</div>
+
+<!-- ===== BOM PANEL ===== -->
+<div class="panel" id="p-calc" style="top:50px;left:276px;width:420px;height:520px;display:none;border-color:rgba(34,197,94,.35)">
+  <div class="panel-head" id="p-calc-head">
+    <div class="panel-title"><span class="dot" style="background:var(--green)"></span>BILL OF MATERIALS</div>
+    <div class="panel-btns">
+      <button class="ph-btn ph-min" onclick="minPanel('p-calc')">_</button>
+      <button class="ph-btn ph-close" onclick="closePanel('p-calc','tb-calc')">×</button>
+    </div>
+  </div>
+  <div class="panel-body">
+    <div style="display:flex;gap:5px;margin-bottom:8px">
+      <button class="ui-btn success" style="margin:0" onclick="exportBOMcsv()">⬇ CSV</button>
+      <button class="ui-btn primary" style="margin:0" onclick="printBOM()">🖨 Print</button>
+    </div>
+    <div id="bom-content"><div style="color:var(--muted);font-size:11px">กด Calculate BOM</div></div>
+  </div>
+</div>
+
+<!-- ===== REBAR DESIGNER ===== -->
+<div class="panel" id="p-rebar" style="top:50px;left:276px;width:320px;height:600px;display:none;border-color:rgba(251,146,60,.4)">
+  <div class="panel-head" id="p-rebar-head">
+    <div class="panel-title"><span class="dot" style="background:var(--orange)"></span>REBAR DESIGNER</div>
+    <div class="panel-btns">
+      <button class="ph-btn ph-min" onclick="minPanel('p-rebar')">_</button>
+      <button class="ph-btn ph-close" onclick="closePanel('p-rebar','tb-rebar')">×</button>
+    </div>
+  </div>
+  <div class="panel-body">
+    <div class="sec">ประเภทโครงสร้าง</div>
+    <select id="rb-type" onchange="rbPreview()">
+      <option value="col_sq">เสาสี่เหลี่ยม (Square Column)</option>
+      <option value="col_round">เสากลม (Round Column)</option>
+      <option value="col_l">เสา L-Shape</option>
+      <option value="col_t">เสา T-Shape</option>
+      <option value="stiffener">เสาเอ็น (Stiffener)</option>
+      <option value="beam">คาน (Beam)</option>
+    </select>
+    <div class="row2g">
+      <div><label>กว้าง (cm)</label><input type="number" id="rb-w" value="30" min="10" step="5" oninput="rbPreview()"></div>
+      <div><label>สูง/เส้นผ่าน (cm)</label><input type="number" id="rb-h" value="30" min="10" step="5" oninput="rbPreview()"></div>
+    </div>
+    <div class="sec">เหล็กหลัก (Main Bar)</div>
+    <div class="row2g">
+      <div><label>จำนวนเส้น</label><input type="number" id="rb-count" value="8" min="4" max="32" step="1" oninput="rbPreview()"></div>
+      <div><label>ขนาด</label>
+        <select id="rb-dia" onchange="rbPreview()">
+          <option value="12">DB12 (1.2cm)</option>
+          <option value="16" selected>DB16 (1.6cm)</option>
+          <option value="20">DB20 (2.0cm)</option>
+          <option value="25">DB25 (2.5cm)</option>
+          <option value="28">DB28 (2.8cm)</option>
+          <option value="32">DB32 (3.2cm)</option>
+        </select>
+      </div>
+    </div>
+    <div class="sec">เหล็กปลอก (Stirrup/Hoop)</div>
+    <div class="row2g">
+      <div><label>ขนาดปลอก</label>
+        <select id="rb-stir-dia" onchange="rbPreview()">
+          <option value="6">RB6</option>
+          <option value="9" selected>RB9</option>
+          <option value="12">RB12</option>
+        </select>
+      </div>
+      <div><label>ระยะห่าง (cm)</label><input type="number" id="rb-stir-sp" value="20" min="5" max="30" step="5" oninput="rbPreview()"></div>
+    </div>
+    <div class="row2g">
+      <div><label>Cover (cm)</label><input type="number" id="rb-cover" value="3" min="2" max="8" step="0.5" oninput="rbPreview()"></div>
+      <div><label>ความยาวเสา (m)</label><input type="number" id="rb-len" value="3" min="0.5" step="0.25" oninput="rbPreview()"></div>
+    </div>
+    <!-- Cross section preview -->
+    <canvas id="rb-canvas" width="290" height="120" style="width:100%;border-radius:5px;background:#0d0f13;border:1px solid var(--border);margin:5px 0;display:block"></canvas>
+    <div class="rb-stat" id="rb-stats"></div>
+    <hr class="sep">
+    <div class="sec">แสดงผลใน 3D</div>
+    <div class="toggle-row"><span>🔩 Show Rebar 3D</span><input type="checkbox" id="chk-rebar-3d" onchange="toggleRebar3D()"></div>
+    <div class="toggle-row"><span>🌡 Bond Stress Heatmap</span><input type="checkbox" id="chk-bond-stress" onchange="toggleBondStress()"></div>
+    <button class="ui-btn orange" onclick="applyRebarToSel()">✅ Apply to Selected</button>
+    <button class="ui-btn primary" onclick="calcRebarBOM()">🔢 Rebar BOM</button>
+    <div id="rb-bom-out" style="margin-top:5px;font-size:11px"></div>
+  </div>
+</div>
+
+<!-- ===== STRUCTURAL ANALYSIS ===== -->
+<div class="panel" id="p-struct" style="top:50px;right:270px;width:310px;height:620px;display:none;border-color:rgba(34,197,94,.35)">
+  <div class="panel-head" id="p-struct-head">
+    <div class="panel-title"><span class="dot" style="background:var(--green)"></span>STRUCTURAL</div>
+    <div class="panel-btns">
+      <button class="ph-btn ph-min" onclick="minPanel('p-struct')">_</button>
+      <button class="ph-btn ph-close" onclick="closePanel('p-struct','tb-struct')">×</button>
+    </div>
+  </div>
+  <div class="panel-body">
+    <div class="sec">โหลดการออกแบบ</div>
+    <div class="row2g">
+      <div><label>Dead Load (kN/m²)</label><input type="number" id="st-dl" value="4.0" step="0.5"></div>
+      <div><label>Live Load (kN/m²)</label><input type="number" id="st-ll" value="2.0" step="0.5"></div>
+    </div>
+    <div class="row2g">
+      <div><label>จำนวนชั้น</label><input type="number" id="st-floors" value="1" min="1" max="20" step="1"></div>
+      <div><label>f'c (MPa)</label><input type="number" id="st-fc" value="25" min="15" max="60" step="5"></div>
+    </div>
+    <button class="ui-btn success" onclick="runStructAnalysis()">▶ Run Analysis</button>
+
+    <hr class="sep">
+    <div class="sec">Bond Groups — ยึดโครงสร้างรับแรงร่วมกัน</div>
+    <div style="font-size:10px;color:var(--muted);margin-bottom:5px">
+      เลือกวัตถุหลายชิ้นด้วย Shift+Click หรือคลิกขวา → Add to Bond → กด Create Bond
+    </div>
+    <div style="font-size:10px;margin-bottom:5px">กำลังเลือก: <span id="bond-sel-count" style="color:var(--accent2);font-family:var(--mono)">0</span> ชิ้น</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-bottom:5px">
+      <button class="ui-btn primary" style="margin:0;font-size:10px" onclick="createBondGroup()">🔗 Create Bond</button>
+      <button class="ui-btn danger"  style="margin:0;font-size:10px" onclick="unbondSelected()">✂ Unbond Sel</button>
+    </div>
+    <div id="bond-list" style="max-height:90px;overflow-y:auto;margin-bottom:6px"></div>
+
+    <hr class="sep">
+    <div class="sec">Visualization</div>
+    <div class="stress-legend">
+      <span style="color:var(--green)">ปลอดภัย</span>
+      <div class="stress-grad"></div>
+      <span style="color:var(--red)">วิกฤต</span>
+    </div>
+    <div class="toggle-row"><span>🌡 Stress Heatmap</span><input type="checkbox" id="chk-heatmap" onchange="toggleHeatmap()"></div>
+    <div class="toggle-row"><span>⬇ Load Flow Arrows</span><input type="checkbox" id="chk-arrows" onchange="toggleArrows()"></div>
+    <div id="struct-result" style="margin-top:6px;font-size:11px"></div>
+    <div class="sec">Load Distribution</div>
+    <div id="load-bars"></div>
+  </div>
+</div>
+
+<!-- ===== MATERIALS PANEL ===== -->
+<div class="panel" id="p-mat" style="top:50px;left:620px;width:290px;height:560px;display:none;border-color:rgba(168,85,247,.4)">
+  <div class="panel-head" id="p-mat-head">
+    <div class="panel-title"><span class="dot" style="background:var(--purple)"></span>MATERIAL MANAGER</div>
+    <div class="panel-btns">
+      <button class="ph-btn ph-min" onclick="minPanel('p-mat')">_</button>
+      <button class="ph-btn ph-close" onclick="closePanel('p-mat','tb-mat')">×</button>
+    </div>
+  </div>
+  <div class="panel-body">
+    <select id="mat-sel" onchange="loadMatEditor()"></select>
+    <button class="ui-btn" onclick="newMat()">➕ New Material</button>
+    <hr class="sep">
+    <label>ชื่อ</label><input type="text" id="m-name">
+    <label>สี</label><input type="color" id="m-color">
+    <div class="row2g">
+      <div><label>กว้าง/หนา (cm)</label><input type="number" id="m-w" step="0.1" oninput="previewUnits()"></div>
+      <div><label>สูง (cm)</label><input type="number" id="m-h" step="0.1" oninput="previewUnits()"></div>
+    </div>
+    <div class="row2g">
+      <div><label>ยาว (cm)</label><input type="number" id="m-l" step="0.1" oninput="previewUnits()"></div>
+      <div><label>รอยต่อ (cm)</label><input type="number" id="m-gap" step="0.1" value="1.5" oninput="previewUnits()"></div>
+    </div>
+    <div style="background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.3);border-radius:4px;padding:5px;font-size:11px;margin-bottom:6px;text-align:center">
+      ผล: <strong id="m-preview" style="color:var(--green);font-family:var(--mono)">0</strong> ชิ้น/ตร.ม.
+    </div>
+    <label>ปูน (ถุง/ตร.ม.)</label><input type="number" id="m-mortar" step="0.01">
+    <label>ทราย (ลบ.ม./ตร.ม.)</label><input type="number" id="m-sand" step="0.01">
+    <label>ประเภท</label>
+    <select id="m-type"><option value="unit">Unit-based (อิฐ)</option><option value="volume">Volume-based</option></select>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:5px">
+      <button class="ui-btn success" onclick="saveMat()">💾 Save</button>
+      <button class="ui-btn danger" id="btn-del-mat" onclick="deleteMat()" style="display:none">🗑 Delete</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== EXPORT PANEL ===== -->
+<div class="panel" id="p-export" style="top:50px;left:620px;width:290px;height:310px;display:none;border-color:rgba(59,130,246,.35)">
+  <div class="panel-head" id="p-export-head">
+    <div class="panel-title"><span class="dot" style="background:var(--accent2)"></span>EXPORT</div>
+    <div class="panel-btns">
+      <button class="ph-btn ph-min" onclick="minPanel('p-export')">_</button>
+      <button class="ph-btn ph-close" onclick="closePanel('p-export','tb-export')">×</button>
+    </div>
+  </div>
+  <div class="panel-body">
+    <div id="export-stat" style="background:var(--surface);border-radius:5px;padding:7px;margin-bottom:8px;font-size:11px">
+      <div style="display:flex;justify-content:space-between;padding:2px 0;border-bottom:1px solid var(--border)"><span>Objects</span><span id="exp-objs" style="font-family:var(--mono);color:var(--accent)">0</span></div>
+      <div style="display:flex;justify-content:space-between;padding:2px 0;border-bottom:1px solid var(--border)"><span>Wall Area</span><span id="exp-area" style="font-family:var(--mono);color:var(--accent)">0 m²</span></div>
+      <div style="display:flex;justify-content:space-between;padding:2px 0"><span>Volume</span><span id="exp-vol" style="font-family:var(--mono);color:var(--accent)">0 m³</span></div>
+    </div>
+    <button class="ui-btn save" onclick="saveProject()">💾 Save .smr</button>
+    <button class="ui-btn success" onclick="exportBOMcsv()">📊 BOM CSV</button>
+    <button class="ui-btn primary" onclick="printBOM()">🖨 Print Report</button>
+    <button class="ui-btn" onclick="updateExportStats()">🔄 Refresh</button>
+  </div>
+</div>
+
+<!-- STATUS BAR -->
+<div id="statusbar">
+  <div style="display:flex;gap:4px;align-items:center;flex-shrink:0;margin-right:8px">
+    <span style="font-size:9px;color:var(--muted)">Control:</span>
+    <button class="tb-btn" id="tb-mode-hand" onclick="setControlMode('hand')" title="Hand Mode - Middle drag to rotate (M)">🤚 Hand</button>
+    <button class="tb-btn on" id="tb-mode-cursor" onclick="setControlMode('cursor')" title="Cursor Mode - Click to select (C)">🖱️ Cursor</button>
+  </div>
+  <span>Objects: <span class="hi" id="sb-objs">0</span></span>
+  <span>Sel: <span class="hi" id="sb-sel">—</span></span>
+  <span>Mode: <span class="hi" id="sb-mode">translate</span></span>
+  <span>Snap: <span class="hi" id="sb-snap">ON</span></span>
+  <span>BondSel: <span class="hi" id="sb-bond">0</span></span>
+  <span style="margin-left:auto" id="sb-coords">X:0 Y:0 Z:0</span>
+</div>
+
+<script type="importmap">{"imports":{"three":"https://unpkg.com/three@0.160.0/build/three.module.js","three/addons/":"https://unpkg.com/three@0.160.0/examples/jsm/"}}</script>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls }    from 'three/addons/controls/OrbitControls.js';
+import { TransformControls } from 'three/addons/controls/TransformControls.js';
+import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
+
+// ═══════════════════════════════════════════
+// MATERIAL DATABASE  (มทอ. 101-64)
+// ═══════════════════════════════════════════
+let DB = {
+  brick:  { name:'Red Brick (อิฐมอญ)',        color:'#c0614e', calcType:'unit',   unitW:6.5,  unitH:4.0, unitL:14.0, gap:1.5, unitsPerSqm:117,  mortarPerSqm:0.15, sandPerSqm:0.04 },
+  block:  { name:'Concrete Block (อิฐบล็อก)',color:'#8fa3a8', calcType:'unit',   unitW:7.0,  unitH:19.0,unitL:39.0, gap:1.0, unitsPerSqm:12.5, mortarPerSqm:0.12, sandPerSqm:0.03 },
+  light:  { name:'Lightweight (มวลเบา)',      color:'#dde3e8', calcType:'unit',   unitW:7.5,  unitH:20.0,unitL:60.0, gap:0.3, unitsPerSqm:8.33, mortarPerSqm:0.10, sandPerSqm:0.0  },
+  rammed: { name:'Rammed Earth (กำแพงดิน)',  color:'#7d5a42', calcType:'volume', unitW:0,    unitH:0,   unitL:0,    gap:0,   unitsPerSqm:0,    mortarPerSqm:0,    sandPerSqm:0.0  },
+  conc:   { name:'Concrete (คอนกรีต)',        color:'#a0aabb', calcType:'volume', unitW:0,    unitH:0,   unitL:0,    gap:0,   unitsPerSqm:0,    mortarPerSqm:0,    sandPerSqm:0.0  },
+};
+
+// ═══════════════════════════════════════════
+// THREE.JS SETUP
+// ═══════════════════════════════════════════
+const container = document.getElementById('canvas-wrap');
+const renderer  = new THREE.WebGLRenderer({ antialias:true, stencil:true });
+renderer.setPixelRatio(devicePixelRatio);
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.setSize(container.clientWidth, container.clientHeight);
+container.appendChild(renderer.domElement);
+
+const labelRen = new CSS2DRenderer();
+labelRen.setSize(container.clientWidth, container.clientHeight);
+labelRen.domElement.style.cssText='position:absolute;top:0;left:0;pointer-events:none;';
+container.appendChild(labelRen.domElement);
+
+const scene  = new THREE.Scene();
+scene.background = new THREE.Color(0x0d0f13);
+scene.fog = new THREE.Fog(0x0d0f13, 35, 80);
+
+const camera = new THREE.PerspectiveCamera(50, container.clientWidth/container.clientHeight, 0.05, 500);
+camera.position.set(8,7,10);
+
+scene.add(new THREE.AmbientLight(0xffffff, 0.5));
+const sun = new THREE.DirectionalLight(0xfff8e7, 1.2);
+sun.position.set(8,16,10); sun.castShadow=true; sun.shadow.mapSize.set(2048,2048);
+scene.add(sun);
+const sunBack = new THREE.DirectionalLight(0x8ab4d4,0.3);
+sunBack.position.set(-6,4,-8);
+scene.add(sunBack);
+
+let gridRef = new THREE.GridHelper(40,40,0x2a3044,0x1c2130);
+scene.add(gridRef);
+scene.add(new THREE.AxesHelper(1.5));
+const arrowGroup = new THREE.Group(); scene.add(arrowGroup);
+
+const orbit = new OrbitControls(camera, renderer.domElement);
+orbit.enableDamping=true; orbit.dampingFactor=0.08;
+
+const tCtrl = new TransformControls(camera, renderer.domElement);
+tCtrl.setSize(1.6);
+tCtrl.addEventListener('dragging-changed', e => {
+  orbit.enabled = !e.value;
+  if (!e.value) {
+    // drag finished
+    snapObject(sel);
+    // Rebuild holes for any affected objects
+    if (sel) rebuildHolesForObj(sel);
+    if (sel?.userData.showBricks) { clearBricks(sel); updateBricks(sel); }
+    updateRealtimeCalc();
+    snapshotState();
+  } else {
+    if (sel?.userData.brickMesh) sel.userData.brickMesh.visible = false;
+    if (sel?.userData.showBricks) sel.material.visible = true;
+    // Hide split meshes while dragging so they don't lag behind
+    if (sel) {
+      if (sel.userData.splitMeshes) sel.userData.splitMeshes.forEach(m=>m.visible=false);
+      // Also hide split meshes of walls affected by this air block
+      if (sel.userData.isAirBlock) {
+        objects.filter(w=>!w.userData.isAirBlock&&w.userData.airCuts?.some(c=>c.abId===sel.uuid))
+          .forEach(w=>{ if(w.userData.splitMeshes) w.userData.splitMeshes.forEach(m=>m.visible=false); w.material.visible=true; });
+      }
+    }
+  }
+});
+tCtrl.addEventListener('change', () => {
+  if (!sel) return;
+  if (snapEnabled && tCtrl.dragging) snapObject(sel);
+  syncPropsUI(); updateDimLabels(); updateRealtimeCalc();
+});
+scene.add(tCtrl);
+
+const rayPlane = new THREE.Mesh(new THREE.PlaneGeometry(200,200), new THREE.MeshBasicMaterial({visible:false,side:THREE.DoubleSide}));
+rayPlane.rotation.x=-Math.PI/2; scene.add(rayPlane);
+
+// Dim labels
+const dimL = { x:mkDimLabel('dx'), y:mkDimLabel('dy'), z:mkDimLabel('dz') };
+function mkDimLabel(cls) {
+  const inp=document.createElement('input'); inp.type='number'; inp.step='0.05'; inp.className=`dim-inp ${cls}`;
+  inp.addEventListener('change',()=>{ if(!sel)return; const v=parseFloat(inp.value); if(!isNaN(v)&&v>0.01) resizeAxis(sel,cls[1],v); });
+  ['pointerdown','mousedown','keydown'].forEach(ev=>inp.addEventListener(ev,e=>e.stopPropagation()));
+  const obj=new CSS2DObject(inp); obj.visible=false; scene.add(obj);
+  return {dom:inp,obj};
+}
+
+// Outline selection — world-space safe
+let outLine = null;
+function setOutline(obj) {
+  if (outLine) { scene.remove(outLine); outLine?.geometry?.dispose(); outLine=null; }
+  if (!obj || obj.userData.isAirBlock) return;
+  // Build edge geometry from a unit box scaled to world size
+  const box = new THREE.Box3().setFromObject(obj);
+  const sz = new THREE.Vector3(); box.getSize(sz);
+  const geo = new THREE.BoxGeometry(sz.x, sz.y, sz.z);
+  outLine = new THREE.LineSegments(
+    new THREE.EdgesGeometry(geo),
+    new THREE.LineBasicMaterial({color:0xf0a500, depthTest:false, linewidth:2})
+  );
+  outLine.renderOrder = 999;
+  // Position at world center of object
+  const center = new THREE.Vector3(); box.getCenter(center);
+  outLine.position.copy(center);
+  outLine.quaternion.copy(obj.quaternion);
+  scene.add(outLine);
+}
+
+// ═══════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════
+let objects=[], sel=null, clipboard=null;
+let multiSel=[];  // multi-selection array of objects
+let groups=[];    // [{id, name, color, members:[uuid,...]}]
+let drawMode=false, drawPts=[], drawMarkers=[], drawLine=null, drawPlane='XZ';
+let snapEnabled=true, showDim=true;
+let calcMode='none', lastCalcUUID=null;
+let history=[], historyIdx=-1;
+let bondGroups=[], bondPending=[], heatmapOn=false, arrowsOn=false;
+let bondStressOn=false, rebar3DOn=false;
+const safePos=new THREE.Vector3();
+const raycaster=new THREE.Raycaster(), mouse=new THREE.Vector2();
+
+// ═══════════════════════════════════════════
+// TOAST
+// ═══════════════════════════════════════════
+function toast(msg, ms=2400) {
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.style.opacity='1';
+  clearTimeout(t._t); t._t=setTimeout(()=>t.style.opacity='0',ms);
+}
+window.showToast=toast;
+
+// ═══════════════════════════════════════════
+// POPULATE UI
+// ═══════════════════════════════════════════
+function populateUI() {
+  const ps=document.getElementById('prop-mat'); ps.innerHTML='';
+  const fw=document.getElementById('filter-wrap');
+  fw.innerHTML='<span class="fchip on" onclick="filterView(\'all\',this)">All</span>';
+  const ms=document.getElementById('mat-sel');
+  ms.innerHTML='<option value="">— Select —</option>';
+  for (const [k,m] of Object.entries(DB)) {
+    const o1=document.createElement('option'); o1.value=k; o1.textContent=m.name; ps.appendChild(o1);
+    const o2=document.createElement('option'); o2.value=k; o2.textContent=m.name; ms.appendChild(o2);
+    const chip=document.createElement('span'); chip.className='fchip';
+    chip.textContent=m.name.split(' ')[0]; chip.style.borderColor=m.color+'66'; chip.style.color=m.color;
+    chip.onclick=function(){filterView(k,this);}; fw.appendChild(chip);
+  }
+}
+
+// ═══════════════════════════════════════════
+// OBJECT MANAGEMENT
+// ═══════════════════════════════════════════
+function addMesh(mesh,name='Wall',type='brick') {
+  mesh.userData={name,wallType:type,showBricks:false,isAirBlock:false};
+  if(DB[type]) mesh.material.color.set(DB[type].color);
+  mesh.castShadow=true; mesh.receiveShadow=true;
+  scene.add(mesh); objects.push(mesh);
+  refreshList(); selectObj(mesh); snapshotState();
+}
+
+window.addWall=function(){
+  const m=new THREE.Mesh(new THREE.BoxGeometry(2,2.5,0.15),new THREE.MeshLambertMaterial());
+  m.position.y=1.25; addMesh(m,`Wall ${objects.length+1}`,'brick');
+};
+
+// ════ AIR BLOCKS ════
+let airCount=0;
+window.addAirBlock=function(){
+  const w=parseFloat(document.getElementById('air-w').value)||0.9;
+  const h=parseFloat(document.getElementById('air-h').value)||2.0;
+  const d=parseFloat(document.getElementById('air-d').value)||0.5;
+  airCount++;
+  const geo=new THREE.BoxGeometry(w,h,d);
+  const mat=new THREE.MeshBasicMaterial({color:0x3b82f6,transparent:true,opacity:0.22,depthWrite:false,side:THREE.DoubleSide});
+  const mesh=new THREE.Mesh(geo,mat);
+  mesh.position.y=h/2;
+  mesh.renderOrder=2;
+  const wf=new THREE.LineSegments(new THREE.EdgesGeometry(geo),new THREE.LineBasicMaterial({color:0x3b82f6,linewidth:2}));
+  mesh.add(wf);
+  const name=`AirBlock ${airCount}`;
+  mesh.userData={name,isAirBlock:true,wallType:'_air',showBricks:false};
+  scene.add(mesh); objects.push(mesh);
+  refreshList(); selectObj(mesh); snapshotState();
+  toast(`🌬 ${name} — ย้ายซ้อนผนัง แล้วกด Apply Cuts`);
+};
+
+window.applyAirCuts=function(){
+  let count=0;
+  // Clear all previous air cuts data
+  objects.forEach(o=>{ if(!o.userData.isAirBlock) o.userData.airCuts=[]; });
+  // Remove old hole visuals and reset stencil
+  objects.forEach(o=>{
+    clearHoleMeshes(o);
+    if(o.userData.splitMeshes){ o.userData.splitMeshes.forEach(m=>{scene.remove(m);m.geometry?.dispose();}); o.userData.splitMeshes=[]; }
+    if(!o.userData.isAirBlock) o.material.visible = !o.userData.showBricks;
+  });
+
+  objects.filter(ab=>ab.userData.isAirBlock&&ab.visible).forEach(ab=>{
+    const abBox=new THREE.Box3().setFromObject(ab);
+    objects.filter(w=>!w.userData.isAirBlock&&w.visible).forEach(wall=>{
+      const wallBox=new THREE.Box3().setFromObject(wall);
+      if(!wallBox.intersectsBox(abBox)) return;
+      const inter=wallBox.clone().intersect(abBox);
+      const sz=new THREE.Vector3(); inter.getSize(sz);
+      const cutArea=Math.max(sz.x,sz.z)*sz.y;
+      if(cutArea<0.001) return;
+      if(!wall.userData.airCuts) wall.userData.airCuts=[];
+      wall.userData.airCuts=wall.userData.airCuts.filter(c=>c.abId!==ab.uuid);
+      wall.userData.airCuts.push({abId:ab.uuid,name:ab.userData.name,area:cutArea,w:Math.max(sz.x,sz.z),h:sz.y});
+      count++;
+      // ── Visual hole: dark "punch" mesh slightly inset in the wall ──
+      renderVisualHole(ab, wall, inter);
+    });
+  });
+  refreshAirList(); refreshList();
+  // Refresh brick view on all walls that got cuts
+  objects.filter(o=>!o.userData.isAirBlock&&o.userData.showBricks&&o.userData.airCuts?.length).forEach(w=>{clearBricks(w);updateBricks(w);});
+  toast(`✅ Applied ${count} cut(s) — BOM อัปเดต`);
+  snapshotState();
+};
+
+function renderVisualHole(ab, wall, interBox){
+  if(!wall.userData.holeMeshes) wall.userData.holeMeshes=[];
+
+  const sz=new THREE.Vector3(); interBox.getSize(sz);
+  const ctr=new THREE.Vector3(); interBox.getCenter(ctr);
+
+  // Wall thickness axis
+  const wallBox=new THREE.Box3().setFromObject(wall);
+  const wallSz=new THREE.Vector3(); wallBox.getSize(wallSz);
+
+  // Hole box: full wall thickness on thin axis, air block size on wide axes
+  let hGeoW, hGeoH, hGeoD;
+  if(wallSz.x <= wallSz.z){ hGeoW = wallSz.x+0.06; hGeoH = sz.y+0.002; hGeoD = sz.z+0.002; }
+  else                     { hGeoW = sz.x+0.002;    hGeoH = sz.y+0.002; hGeoD = wallSz.z+0.06; }
+
+  const hMin = new THREE.Vector3(ctr.x-hGeoW/2, ctr.y-hGeoH/2, ctr.z-hGeoD/2);
+  const hMax = new THREE.Vector3(ctr.x+hGeoW/2, ctr.y+hGeoH/2, ctr.z+hGeoD/2);
+
+  applyClipHoleToWall(wall, hMin, hMax);
+
+  // ── Edge outline: attach as CHILD of AirBlock so it moves with it ──
+  // Remove old edge outline children from this ab that belong to this wall
+  const oldEdges = ab.children.filter(c=>c.userData.holeEdgeForWall===wall.uuid);
+  oldEdges.forEach(c=>{ ab.remove(c); c.geometry?.dispose(); });
+
+  // Build outline in AirBlock local space
+  const abBox = new THREE.Box3().setFromObject(ab);
+  const abSz = new THREE.Vector3(); abBox.getSize(abSz);
+  // Outline size matches the hole (wall-thickness wide, air-block sized height/width)
+  const outlineGeo = new THREE.BoxGeometry(hGeoW, hGeoH, hGeoD);
+  const edgeMat = new THREE.LineBasicMaterial({color:0x60a5fa, depthTest:true, transparent:true, opacity:0.8});
+  const edgeLine = new THREE.LineSegments(new THREE.EdgesGeometry(outlineGeo), edgeMat);
+  // Convert world center → AirBlock local space
+  const localCtr = ab.worldToLocal(ctr.clone());
+  edgeLine.position.copy(localCtr);
+  edgeLine.renderOrder = 5;
+  edgeLine.userData = { isHoleMesh: true, holeEdgeForWall: wall.uuid };
+  ab.add(edgeLine);
+  // Track it so we can remove on hole clear
+  wall.userData.holeMeshes.push({ isAbChild: true, abRef: ab, child: edgeLine });
+
+  // Store hole params for rebuild
+  if(!wall.userData.holeBoxes) wall.userData.holeBoxes=[];
+  wall.userData.holeBoxes = wall.userData.holeBoxes.filter(h=>h.abId!==ab.uuid);
+  wall.userData.holeBoxes.push({abId:ab.uuid, min:hMin.toArray(), max:hMax.toArray()});
+}
+
+// Build a new wall geometry that has the hole region removed
+function applyClipHoleToWall(wall, hMin, hMax){
+  // Use clipping planes approach:
+  // Show wall ONLY where it's OUTSIDE the hole box on at least one axis.
+  // Three.js MeshBasicMaterial/MeshLambertMaterial supports clippingPlanes
+  // but they hide everything on one side (AND logic = impossible to punch a hole).
+  //
+  // Solid approach: rebuild the InstancedMesh (bricks) skips bricks in hole (done).
+  // For solid (non-brick) wall: use ColorWrite=false trick + depth trick.
+  // Actually the cleanest approach: make the wall DoubleSide + transparent inside hole
+  // using a custom shader – but that's complex.
+  //
+  // SIMPLEST that works: just hide the solid wall face and let brick instances do the work.
+  // For non-brick walls, we split into sub-meshes (slabs above/below/left/right of hole).
+  rebuildWallWithHoles(wall);
+}
+
+function rebuildWallWithHoles(wall){
+  // Remove old split meshes
+  if(wall.userData.splitMeshes){
+    wall.userData.splitMeshes.forEach(m=>{scene.remove(m);m.geometry?.dispose();});
+    wall.userData.splitMeshes=[];
+  }
+  if(!wall.userData.holeBoxes?.length) return;
+
+  // For brick view, bricks already handle it — just hide the base mesh
+  if(wall.userData.showBricks){ wall.material.visible=false; return; }
+
+  // For solid walls: hide base mesh, spawn slab quads around the hole
+  const wallBox = new THREE.Box3().setFromObject(wall);
+  const wMin = new THREE.Vector3(), wMax = new THREE.Vector3();
+  wallBox.getMin(wMin); wallBox.getMax(wMax);
+  const wallSz = new THREE.Vector3(); wallBox.getSize(wallSz);
+
+  // Use first hole only for now (multiple holes: iterate)
+  const holeData = wall.userData.holeBoxes[0];
+  const hMin = new THREE.Vector3().fromArray(holeData.min);
+  const hMax = new THREE.Vector3().fromArray(holeData.max);
+
+  // Determine thin axis
+  const isThinX = wallSz.x <= wallSz.z;
+  const wallColor = wall.material.color.clone();
+  const slabMat = () => new THREE.MeshLambertMaterial({color:wallColor, side:THREE.DoubleSide});
+
+  // Build 4 slabs: top, bottom, left, right of hole (in face plane)
+  const slabs = [];
+  if(isThinX){
+    // Wall faces Z direction; hole cuts through X
+    const cx = (wMin.x+wMax.x)/2, thick = wallSz.x;
+    // Top slab: from hole top to wall top
+    if(hMax.y < wMax.y - 0.001){
+      const h = wMax.y - hMax.y;
+      const g = new THREE.BoxGeometry(thick, h, wallSz.z);
+      slabs.push({g, pos:new THREE.Vector3(cx, hMax.y+h/2, (wMin.z+wMax.z)/2)});
+    }
+    // Bottom slab
+    if(hMin.y > wMin.y + 0.001){
+      const h = hMin.y - wMin.y;
+      const g = new THREE.BoxGeometry(thick, h, wallSz.z);
+      slabs.push({g, pos:new THREE.Vector3(cx, wMin.y+h/2, (wMin.z+wMax.z)/2)});
+    }
+    // Left slab (negative Z)
+    if(hMin.z > wMin.z + 0.001){
+      const w2 = hMin.z - wMin.z;
+      const g = new THREE.BoxGeometry(thick, hMax.y-hMin.y, w2);
+      slabs.push({g, pos:new THREE.Vector3(cx, (hMin.y+hMax.y)/2, wMin.z+w2/2)});
+    }
+    // Right slab (positive Z)
+    if(hMax.z < wMax.z - 0.001){
+      const w2 = wMax.z - hMax.z;
+      const g = new THREE.BoxGeometry(thick, hMax.y-hMin.y, w2);
+      slabs.push({g, pos:new THREE.Vector3(cx, (hMin.y+hMax.y)/2, hMax.z+w2/2)});
+    }
+  } else {
+    // Wall faces X direction
+    const cz = (wMin.z+wMax.z)/2, thick = wallSz.z;
+    if(hMax.y < wMax.y - 0.001){
+      const h = wMax.y - hMax.y;
+      const g = new THREE.BoxGeometry(wallSz.x, h, thick);
+      slabs.push({g, pos:new THREE.Vector3((wMin.x+wMax.x)/2, hMax.y+h/2, cz)});
+    }
+    if(hMin.y > wMin.y + 0.001){
+      const h = hMin.y - wMin.y;
+      const g = new THREE.BoxGeometry(wallSz.x, h, thick);
+      slabs.push({g, pos:new THREE.Vector3((wMin.x+wMax.x)/2, wMin.y+h/2, cz)});
+    }
+    if(hMin.x > wMin.x + 0.001){
+      const w2 = hMin.x - wMin.x;
+      const g = new THREE.BoxGeometry(w2, hMax.y-hMin.y, thick);
+      slabs.push({g, pos:new THREE.Vector3(wMin.x+w2/2, (hMin.y+hMax.y)/2, cz)});
+    }
+    if(hMax.x < wMax.x - 0.001){
+      const w2 = wMax.x - hMax.x;
+      const g = new THREE.BoxGeometry(w2, hMax.y-hMin.y, thick);
+      slabs.push({g, pos:new THREE.Vector3(hMax.x+w2/2, (hMin.y+hMax.y)/2, cz)});
+    }
+  }
+
+  if(!wall.userData.splitMeshes) wall.userData.splitMeshes=[];
+  slabs.forEach(s=>{
+    const m = new THREE.Mesh(s.g, slabMat());
+    m.position.copy(s.pos);
+    m.castShadow=true; m.receiveShadow=true;
+    m.userData={isSplitMesh:true};
+    scene.add(m);
+    wall.userData.splitMeshes.push(m);
+  });
+
+  // Hide original wall mesh (replaced by slabs)
+  wall.material.visible = false;
+}
+
+// Helper to remove all hole mesh entries from wall
+function clearHoleMeshes(wall){
+  if(!wall.userData.holeMeshes) return;
+  wall.userData.holeMeshes.forEach(h=>{
+    if(h.isAbChild){ h.abRef.remove(h.child); h.child.geometry?.dispose(); }
+    else { scene.remove(h); h.geometry?.dispose(); }
+  });
+  wall.userData.holeMeshes=[];
+}
+
+// Reset wall hole visuals (called when cuts are removed)
+function clearWallStencil(wall){
+  if(!wall||wall.userData.isAirBlock) return;
+  clearHoleMeshes(wall);
+  if(wall.userData.splitMeshes){
+    wall.userData.splitMeshes.forEach(m=>{scene.remove(m);m.geometry?.dispose();});
+    wall.userData.splitMeshes=[];
+  }
+  wall.userData.holeBoxes=[];
+  if(!wall.userData.showBricks) wall.material.visible=true;
+}
+
+// Rebuild holes after an object is moved/rotated/scaled
+function rebuildHolesForObj(obj){
+  if(!obj) return;
+  if(obj.userData.isAirBlock){
+    // This air block may affect multiple walls — rebuild each
+    objects.filter(w=>!w.userData.isAirBlock&&w.userData.airCuts?.some(c=>c.abId===obj.uuid))
+      .forEach(wall=>rebuildWallHoles(wall));
+  } else {
+    // This is a wall — rebuild its own holes
+    rebuildWallHoles(obj);
+  }
+}
+
+// Full rebuild of hole visuals for one wall using its current airCuts
+function rebuildWallHoles(wall){
+  if(!wall||wall.userData.isAirBlock) return;
+  clearHoleMeshes(wall);
+  if(wall.userData.splitMeshes){ wall.userData.splitMeshes.forEach(m=>{scene.remove(m);m.geometry?.dispose();}); wall.userData.splitMeshes=[]; }
+  wall.userData.holeBoxes=[];
+  if(!wall.userData.airCuts?.length){
+    if(!wall.userData.showBricks) wall.material.visible=true;
+    return;
+  }
+  wall.userData.airCuts.forEach(cut=>{
+    const ab=objects.find(o=>o.uuid===cut.abId);
+    if(!ab||!ab.visible) return;
+    const abBox=new THREE.Box3().setFromObject(ab);
+    const wallBox=new THREE.Box3().setFromObject(wall);
+    if(!wallBox.intersectsBox(abBox)) return;
+    const inter=wallBox.clone().intersect(abBox);
+    const sz=new THREE.Vector3(); inter.getSize(sz);
+    cut.area=Math.max(sz.x,sz.z)*sz.y; cut.w=Math.max(sz.x,sz.z); cut.h=sz.y;
+    renderVisualHole(ab, wall, inter);
+  });
+  if(wall.userData.showBricks){ clearBricks(wall); updateBricks(wall); }
+}
+
+function refreshAirList(){
+  const el=document.getElementById('air-list'); if(!el) return;
+  const abs=objects.filter(o=>o.userData.isAirBlock);
+  if(!abs.length){el.innerHTML='<div style="color:var(--muted);font-size:10px">ยังไม่มี Air Block</div>';return;}
+  el.innerHTML=abs.map((ab,i)=>{
+    const cuts=objects.filter(w=>!w.userData.isAirBlock).filter(w=>w.userData.airCuts?.some(c=>c.abId===ab.uuid));
+    return `<div class="ab-item${ab===sel?' on':''}" onclick="selectObj(objects.find(o=>o.uuid==='${ab.uuid}'))">
+      <span>🌬</span><span class="ab-name">${ab.userData.name}</span>
+      <span style="color:var(--muted);font-size:10px">${cuts.length} walls</span>
+    </div>`;
+  }).join('');
+}
+
+// ════ SELECT ════
+function selectObj(obj) {
+  sel=obj; setOutline(obj); tCtrl.detach();
+  const pb=document.getElementById('props-box');
+  if(obj&&obj.visible) {
+    if(!obj.userData.isAirBlock) tCtrl.attach(obj);
+    else tCtrl.attach(obj); // air blocks also movable
+    safePos.copy(obj.position);
+    pb.style.display='block';
+    document.getElementById('props-name').textContent=obj.userData.name;
+    document.getElementById('prop-mat').value=obj.userData.wallType||'brick';
+    document.getElementById('chk-brick').checked=!!obj.userData.showBricks;
+    syncPropsUI(); updateDimLabels();
+  } else { pb.style.display='none'; hideDimLabels(); }
+  refreshList(); updateStatusBar();
+}
+
+// ════ DELETE ════
+function deleteObj(obj, silent=false) {
+  if(!obj) return;
+  clearBricks(obj);
+  clearRebar(obj);
+  clearHoleMeshes(obj);
+  if(obj.userData.splitMeshes){ obj.userData.splitMeshes.forEach(m=>{scene.remove(m);m.geometry?.dispose();}); }
+  // If deleting an airblock, clean up edge children it owns
+  if(obj.userData.isAirBlock){
+    [...obj.children].filter(c=>c.userData.isHoleMesh).forEach(c=>{obj.remove(c);c.geometry?.dispose();});
+  }
+  scene.remove(obj); obj.geometry?.dispose();
+  objects=objects.filter(o=>o!==obj);
+  // Remove from groups
+  groups=groups.map(g=>({...g,members:g.members.filter(uid=>uid!==obj.uuid)}));
+  groups=groups.filter(g=>g.members.length>0);
+  // Remove from multiSel
+  multiSel=multiSel.filter(o=>o!==obj);
+  if(sel===obj) selectObj(null);
+  if(!silent){refreshList(); refreshAirList(); updateStatusBar();}
+}
+window.deleteObj=deleteObj;
+
+// ════ SNAP ════
+function snapObject(obj) {
+  if(!obj||!snapEnabled) return;
+  const s=0.5;
+  obj.position.x=Math.round(obj.position.x/s)*s;
+  obj.position.z=Math.round(obj.position.z/s)*s;
+  obj.position.y=Math.max(0,Math.round(obj.position.y/s)*s);
+}
+
+// ════ RESIZE ════
+function resizeAxis(obj,axis,val) {
+  const box=new THREE.Box3().setFromObject(obj), sz=new THREE.Vector3(); box.getSize(sz);
+  const cur=axis==='x'?sz.x:axis==='y'?sz.y:sz.z;
+  if(cur>0) obj.scale[axis]*=val/cur;
+  updateDimLabels(); clearBricks(obj); updateBricks(obj); updateRealtimeCalc();
+}
+
+// ════ COPY / PASTE ════
+function copyObj(){
+  if(!sel) return;
+  const box=new THREE.Box3().setFromObject(sel),sz=new THREE.Vector3(); box.getSize(sz);
+  clipboard={name:sel.userData.name,wallType:sel.userData.wallType,isAirBlock:sel.userData.isAirBlock,
+    position:sel.position.toArray(),rotation:sel.rotation.toArray(),scale:sel.scale.toArray(),dims:[sz.x,sz.y,sz.z],
+    drawPoints:sel.userData.drawPoints?JSON.parse(JSON.stringify(sel.userData.drawPoints)):null};
+  toast('📋 Copied: '+sel.userData.name);
+}
+window.copyObj=copyObj;
+
+function pasteObj(){
+  if(!clipboard) return toast('คลิปบอร์ดว่าง');
+  let mesh;
+  if(clipboard.drawPoints){
+    const shape=new THREE.Shape(); const pts=clipboard.drawPoints;
+    shape.moveTo(pts[0].x,pts[0].y); pts.slice(1).forEach(p=>shape.lineTo(p.x,p.y));
+    const geo=new THREE.ExtrudeGeometry(shape,{depth:clipboard.dims[1],bevelEnabled:false}); geo.rotateX(-Math.PI/2);
+    mesh=new THREE.Mesh(geo,new THREE.MeshLambertMaterial());
+  } else {
+    mesh=new THREE.Mesh(new THREE.BoxGeometry(1,1,1),new THREE.MeshLambertMaterial());
+    mesh.scale.fromArray(clipboard.scale);
+  }
+  mesh.position.fromArray(clipboard.position); mesh.position.x+=0.5; mesh.position.z+=0.5;
+  mesh.rotation.fromArray(clipboard.rotation);
+  if(clipboard.drawPoints) mesh.userData.drawPoints=JSON.parse(JSON.stringify(clipboard.drawPoints));
+  addMesh(mesh,clipboard.name+' copy',clipboard.wallType);
+}
+window.pasteObj=pasteObj;
+
+// ═══════════════════════════════════════════
+// DIM LABELS
+// ═══════════════════════════════════════════
+function updateDimLabels(){
+  if(!sel||!sel.visible||!showDim){hideDimLabels();return;}
+  const box=new THREE.Box3().setFromObject(sel),sz=new THREE.Vector3(),ct=new THREE.Vector3();
+  box.getSize(sz); box.getCenter(ct);
+  if(document.activeElement!==dimL.x.dom) dimL.x.dom.value=sz.x.toFixed(2);
+  if(document.activeElement!==dimL.y.dom) dimL.y.dom.value=sz.y.toFixed(2);
+  if(document.activeElement!==dimL.z.dom) dimL.z.dom.value=sz.z.toFixed(2);
+  dimL.x.obj.position.set(ct.x,ct.y-sz.y/2-0.4,ct.z+sz.z/2);
+  dimL.y.obj.position.set(ct.x+sz.x/2+0.4,ct.y,ct.z+sz.z/2);
+  dimL.z.obj.position.set(ct.x-sz.x/2,ct.y-sz.y/2-0.4,ct.z);
+  Object.values(dimL).forEach(d=>d.obj.visible=true);
+}
+function hideDimLabels(){ Object.values(dimL).forEach(d=>d.obj.visible=false); }
+function syncPropsUI(){
+  if(!sel) return;
+  document.getElementById('px').value=sel.position.x.toFixed(2);
+  document.getElementById('py').value=sel.position.y.toFixed(2);
+  document.getElementById('pz').value=sel.position.z.toFixed(2);
+  document.getElementById('rx').value=(sel.rotation.x*THREE.MathUtils.RAD2DEG).toFixed(1);
+  document.getElementById('ry').value=(sel.rotation.y*THREE.MathUtils.RAD2DEG).toFixed(1);
+  document.getElementById('rz').value=(sel.rotation.z*THREE.MathUtils.RAD2DEG).toFixed(1);
+}
+
+// ═══════════════════════════════════════════
+// BRICK VISUALIZER
+// ═══════════════════════════════════════════
+function clearBricks(obj){
+  if(!obj||!obj.userData.brickMesh) return;
+  obj.remove(obj.userData.brickMesh);
+  scene.remove(obj.userData.brickMesh);
+  obj.userData.brickMesh.geometry?.dispose();
+  obj.userData.brickMesh.material?.dispose();
+  obj.userData.brickMesh=null;
+}
+
+function updateBricks(obj){
+  if(!obj) return;
+  clearBricks(obj);
+  if(!obj.userData.showBricks){obj.material.visible=true;return;}
+  if(obj.userData.isAirBlock){return;}
+  obj.material.visible=false;
+  const mat=DB[obj.userData.wallType];
+  if(!mat||mat.calcType==='volume'){obj.material.visible=true;return;}
+
+  obj.geometry.computeBoundingBox();
+  const lbox=obj.geometry.boundingBox, lsz=new THREE.Vector3(); lbox.getSize(lsz);
+  const W=lsz.x*Math.abs(obj.scale.x), H=lsz.y*Math.abs(obj.scale.y), D=lsz.z*Math.abs(obj.scale.z);
+  const gap=(mat.gap||1.5)/100, uL=(mat.unitL||14)/100, uH=(mat.unitH||4)/100, uThick=(mat.unitW||6.5)/100;
+  const cols=Math.ceil(W/(uL+gap)), rows=Math.ceil(H/(uH+gap)), layers=Math.max(1,Math.floor(D/(uThick+gap)));
+
+  // Precompute world-space air cut boxes for this wall
+  const airBoxes=[];
+  if(obj.userData.airCuts?.length){
+    obj.userData.airCuts.forEach(cut=>{
+      const abObj=objects.find(o=>o.uuid===cut.abId);
+      if(!abObj) return;
+      airBoxes.push(new THREE.Box3().setFromObject(abObj));
+    });
+  }
+  // Also check live air blocks by intersection even if not yet applied
+  objects.filter(o=>o.userData.isAirBlock&&o.visible).forEach(ab=>{
+    const abBox=new THREE.Box3().setFromObject(ab);
+    const wallBox=new THREE.Box3().setFromObject(obj);
+    if(wallBox.intersectsBox(abBox)&&!airBoxes.some(b=>b.equals(abBox))){
+      // only skip if this ab is already applied as a cut
+      // (don't auto-cut just because air block overlaps)
+    }
+  });
+
+  const pos=[];
+  const brickBox=new THREE.Box3();
+  const brickHalf=new THREE.Vector3(uL/2-0.001, uH/2-0.001, uThick/2-0.001);
+
+  for(let ly=0;ly<layers;ly++) for(let r=0;r<rows;r++) for(let c=0;c<cols;c++){
+    const st=(r%2!==0)?uL/2:0;
+    const bx=-W/2+uL/2+c*(uL+gap)-st;
+    const by=-H/2+uH/2+r*(uH+gap);
+    const bz=-D/2+uThick/2+ly*(uThick+gap);
+    if(Math.abs(bx)>W/2+uL/2||by>H/2+uH/2) continue;
+
+    // Convert brick local position → world position
+    if(airBoxes.length>0){
+      // local brick center in object-local space
+      const localPos=new THREE.Vector3(
+        bx/Math.abs(obj.scale.x),
+        by/Math.abs(obj.scale.y),
+        bz/Math.abs(obj.scale.z)
+      );
+      // to world space
+      const worldPos=localPos.clone().applyMatrix4(obj.matrixWorld);
+      // world-space brick bounding box
+      brickBox.setFromCenterAndSize(worldPos, new THREE.Vector3(uL, uH, uThick));
+      // Skip if this brick overlaps any air cut box (with small shrink tolerance)
+      const brickBoxShrunk=brickBox.clone();
+      brickBoxShrunk.expandByScalar(-0.01); // 1cm tolerance – brick must mostly be inside cut to skip
+      let blocked=false;
+      for(const ab of airBoxes){
+        if(ab.containsBox(brickBoxShrunk)||ab.intersectsBox(brickBox)){
+          // Check overlap volume – skip brick only if >50% is inside air box
+          const overlap=brickBox.clone().intersect(ab);
+          if(!overlap.isEmpty()){
+            const ovSz=new THREE.Vector3(); overlap.getSize(ovSz);
+            const bkSz=new THREE.Vector3(uL,uH,uThick);
+            const ratio=(ovSz.x*ovSz.y*ovSz.z)/(bkSz.x*bkSz.y*bkSz.z);
+            if(ratio>0.35){blocked=true;break;}
+          }
+        }
+      }
+      if(blocked) continue;
+    }
+    pos.push(bx/Math.abs(obj.scale.x),by/Math.abs(obj.scale.y),bz/Math.abs(obj.scale.z));
+  }
+
+  const cnt=pos.length/3; if(!cnt){obj.material.visible=true;return;}
+  const ig=new THREE.InstancedMesh(
+    new THREE.BoxGeometry(uL-.005,uH-.005,uThick-.003),
+    new THREE.MeshLambertMaterial({color:mat.color}),cnt
+  );
+  // Apply same stencil test as wall so bricks also respect hole
+  if(obj.material.stencilWrite){
+    ig.material.stencilWrite=true;
+    ig.material.stencilFunc=THREE.NotEqualStencilFunc;
+    ig.material.stencilRef=1;
+  }
+  const dummy=new THREE.Object3D();
+  for(let i=0;i<cnt;i++){
+    dummy.position.set(pos[i*3],pos[i*3+1],pos[i*3+2]);
+    dummy.updateMatrix();
+    ig.setMatrixAt(i,dummy.matrix);
+  }
+  ig.instanceMatrix.needsUpdate=true; ig.castShadow=true; ig.receiveShadow=true;
+  obj.add(ig); obj.userData.brickMesh=ig;
+}
+
+// ═══════════════════════════════════════════
+// BOM CALCULATION  (มทอ. 101-64)
+// ═══════════════════════════════════════════
+function calcObjectData(obj){
+  const box=new THREE.Box3().setFromObject(obj), sz=new THREE.Vector3(); box.getSize(sz);
+  let area=Math.max(sz.x,sz.z)*sz.y;
+  const vol=sz.x*sz.y*sz.z;
+
+  // Recalculate cut areas from current AirBlock positions (not stale stored values)
+  let cutArea=0;
+  if(obj.userData.airCuts?.length){
+    obj.userData.airCuts.forEach(cut=>{
+      const ab=objects.find(o=>o.uuid===cut.abId);
+      if(!ab) return;
+      const abBox=new THREE.Box3().setFromObject(ab);
+      const inter=box.clone().intersect(abBox);
+      if(inter.isEmpty()) return;
+      const isz=new THREE.Vector3(); inter.getSize(isz);
+      cutArea+=Math.max(isz.x,isz.z)*isz.y;
+      // Keep stored value in sync
+      cut.area=Math.max(isz.x,isz.z)*isz.y;
+      cut.w=Math.max(isz.x,isz.z); cut.h=isz.y;
+    });
+  }
+  // Deduct legacy openings too
+  if(obj.userData.openings?.length) cutArea+=obj.userData.openings.reduce((s,o)=>s+o.w*o.h,0);
+  area=Math.max(0,area-cutArea);
+
+  const mat=DB[obj.userData.wallType];
+  let units3d=0,unitsStd=0,layers=1;
+  if(mat&&mat.calcType==='unit'){
+    const thick=Math.min(sz.x,sz.z), gap=(mat.gap||1.5)/100, uL=(mat.unitL||14)/100, uH=(mat.unitH||4)/100, uThick=(mat.unitW||6.5)/100;
+    layers=Math.max(1,Math.floor(thick/(uThick+gap)));
+    // Use area-based unit count (more accurate with holes)
+    unitsStd=area*mat.unitsPerSqm*layers;
+    units3d=unitsStd; // align display
+  }
+  return {sz,area,vol,units3d,unitsStd,layers,cutArea};
+}
+
+function bomHTML(key,data,label){
+  if(data.area<0.001) return '';
+  const mat=DB[key]; if(!mat) return '';
+  const {area,vol,units3d,unitsStd,layers,cutArea}=data;
+  const grossArea=area+(cutArea||0);
+  let detail='',compare='';
+  if(mat.calcType==='volume'){
+    const tVol=vol*1.3, part=tVol/6;
+    detail=`<table class="res"><tr><th>วัสดุ</th><th>ปริมาณ</th><th>หน่วย</th></tr>
+      <tr><td>ดิน</td><td>${(part*3).toFixed(3)}</td><td>m³</td></tr>
+      <tr><td>ทราย</td><td>${(part*2).toFixed(3)}</td><td>m³</td></tr>
+      <tr><td>ปูน</td><td>${(part*1440/50).toFixed(1)}</td><td>ถุง</td></tr>
+      <tr style="background:rgba(240,165,0,.08)"><td>รวม+เผื่อ30%</td><td>${tVol.toFixed(3)}</td><td>m³</td></tr></table>`;
+  } else {
+    compare=`<div class="compare-box"><div class="cx-title">⚖️ 3D vs Standard (มทอ.101-64)</div>
+      <table class="res"><tr><th>วิธี</th><th>จำนวน</th><th>หมายเหตุ</th></tr>
+      <tr><td>3D Sim</td><td style="color:var(--accent);font-family:var(--mono)">${Math.ceil(units3d)}</td><td style="color:var(--muted);font-size:10px">จากโมเดล</td></tr>
+      <tr><td>Standard</td><td style="color:var(--green);font-family:var(--mono)">${Math.ceil(unitsStd)}</td><td style="color:var(--muted);font-size:10px">แนะนำสั่งซื้อ</td></tr>
+      <tr><td>Layers</td><td>${layers}</td><td></td></tr></table></div>`;
+    const mortar=area*mat.mortarPerSqm, sand=area*mat.sandPerSqm, plaster=(area*2)/2.5;
+    detail=`<table class="res"><tr><th>วัสดุ</th><th>ปริมาณ</th><th>หน่วย</th></tr>
+      <tr><td>${mat.name}</td><td style="font-weight:700">${Math.ceil(unitsStd)}</td><td>ชิ้น</td></tr>
+      <tr><td>ปูนก่อ</td><td>${Math.ceil(mortar)}</td><td>ถุง</td></tr>
+      <tr><td>ทราย</td><td>${sand.toFixed(3)}</td><td>m³</td></tr>
+      <tr style="color:var(--muted)"><td>*ปูนฉาบ(2หน้า)</td><td>${Math.ceil(plaster)}</td><td>ถุง</td></tr></table>`;
+  }
+  const cutNote=cutArea>0.001?`<div style="color:#f87171;font-size:10px;margin-top:2px">✂️ หักช่องเปิด: −${cutArea.toFixed(3)} m² | พื้นที่รวมก่อนตัด: ${grossArea.toFixed(3)} m²</div>`:'';
+  return `<div class="calc-block" style="border-color:${mat.color}">
+    <h3 style="color:${mat.color}">${label||mat.name}</h3>
+    <div class="sub">พื้นที่สุทธิ: ${area.toFixed(3)} m² | ปริมาตร: ${vol.toFixed(3)} m²${layers>1?` | ${layers} layers`:''}</div>
+    ${cutNote}${compare}${detail}</div>`;
+}
+
+window.calcSingle=function(){
+  if(!sel||sel.userData.isAirBlock) return;
+  const d=calcObjectData(sel); d.objName=sel.userData.name;
+  calcMode='single'; lastCalcUUID=sel.uuid;
+  const html=bomHTML(sel.userData.wallType,d,`📌 ${sel.userData.name}`);
+  document.getElementById('bom-content').innerHTML=html||'<div style="color:var(--muted)">ไม่มีข้อมูล</div>';
+  showPanel('p-calc','tb-calc');
+};
+
+window.calcAll=function(){
+  calcMode='all';
+  const summary={}; let totalObjs=0,totalArea=0,totalVol=0;
+  for(const k of Object.keys(DB)) summary[k]={area:0,vol:0,units3d:0,unitsStd:0,layers:1};
+  objects.forEach(obj=>{
+    if(!obj.visible||obj.userData.isAirBlock) return; totalObjs++;
+    const t=obj.userData.wallType; if(!summary[t]) summary[t]={area:0,vol:0,units3d:0,unitsStd:0,layers:1};
+    const d=calcObjectData(obj);
+    summary[t].area+=d.area; summary[t].vol+=d.vol; summary[t].units3d+=d.units3d; summary[t].unitsStd+=d.unitsStd; summary[t].layers=Math.max(summary[t].layers,d.layers);
+    totalArea+=d.area; totalVol+=d.vol;
+  });
+  let html=`<div style="background:rgba(240,165,0,.08);border:1px solid rgba(240,165,0,.3);border-radius:5px;padding:7px;margin-bottom:8px;font-size:11px">
+    <strong>📦 Summary</strong> — ${totalObjs} วัตถุ | ${totalArea.toFixed(2)} m² | ${totalVol.toFixed(3)} m³</div>`;
+  for(const [k,d] of Object.entries(summary)) if(DB[k]) html+=bomHTML(k,d);
+  if(!totalObjs) html='<div style="color:var(--muted)">ไม่มีวัตถุ</div>';
+  document.getElementById('bom-content').innerHTML=html;
+  showPanel('p-calc','tb-calc');
+};
+
+function updateRealtimeCalc(){
+  const p=document.getElementById('p-calc'); if(!p||p.style.display==='none') return;
+  if(calcMode==='single'&&sel&&sel.uuid===lastCalcUUID) calcSingle();
+  else if(calcMode==='all') calcAll();
+}
+
+// ═══════════════════════════════════════════
+// MULTI-SELECT HELPERS
+// ═══════════════════════════════════════════
+window.selectAllObjects=function(){
+  multiSel=objects.filter(o=>o.visible).slice();
+  if(multiSel.length) selectObj(multiSel[multiSel.length-1]);
+  refreshList(); toast(`✅ เลือกทั้งหมด ${multiSel.length} ชิ้น`);
+};
+window.deselectAll=function(){
+  multiSel=[]; selectObj(null); refreshList();
+};
+function toggleMultiSel(obj){
+  const idx=multiSel.indexOf(obj);
+  if(idx>=0) multiSel.splice(idx,1); else multiSel.push(obj);
+  selectObj(multiSel.length?multiSel[multiSel.length-1]:null);
+  refreshList();
+}
+function rangeSelectTo(obj){
+  const list=objects.filter(o=>o.visible);
+  const from=sel?list.indexOf(sel):-1, to=list.indexOf(obj);
+  if(from<0){toggleMultiSel(obj);return;}
+  const lo=Math.min(from,to), hi=Math.max(from,to);
+  for(let i=lo;i<=hi;i++) if(!multiSel.includes(list[i])) multiSel.push(list[i]);
+  selectObj(obj); refreshList();
+}
+
+// ═══════════════════════════════════════════
+// GROUP SYSTEM
+// ═══════════════════════════════════════════
+const GROUP_COLORS=['#a855f7','#f0a500','#22c55e','#3b82f6','#ef4444','#06b6d4'];
+function getObjGroup(obj){return groups.find(g=>g.members.includes(obj.uuid));}
+window.createGroupFromMultiSel=function(){
+  const targets=multiSel.length>1?multiSel:(sel?[sel]:[]);
+  if(targets.length<2)return toast('⚠️ เลือกอย่างน้อย 2 ชิ้นก่อน (Ctrl/Shift+คลิก)');
+  const name=prompt('ชื่อกลุ่ม:',`Group ${groups.length+1}`); if(!name?.trim()) return;
+  // Remove from old groups
+  targets.forEach(o=>{groups=groups.map(g=>({...g,members:g.members.filter(uid=>uid!==o.uuid)}));});
+  groups=groups.filter(g=>g.members.length>0);
+  const color=GROUP_COLORS[groups.length%GROUP_COLORS.length];
+  groups.push({id:Date.now(),name:name.trim(),color,members:targets.map(o=>o.uuid)});
+  multiSel=[]; refreshList(); snapshotState();
+  toast(`📁 กลุ่ม "${name.trim()}" สร้างแล้ว (${targets.length} ชิ้น)`);
+};
+window.ctxCreateGroupWithMultiSel=function(){createGroupFromMultiSel();};
+window.ctxRemoveFromGroup=function(){
+  if(!ctxObj)return;
+  groups=groups.map(g=>({...g,members:g.members.filter(uid=>uid!==ctxObj.uuid)}));
+  groups=groups.filter(g=>g.members.length>0);
+  refreshList(); snapshotState(); toast('📂 ลบออกจากกลุ่มแล้ว');
+};
+window.dissolveGroup=function(gid){
+  groups=groups.filter(g=>g.id!==gid); refreshList(); snapshotState();
+};
+
+// Move all group members when primary sel moves
+tCtrl.addEventListener('objectChange',()=>{
+  if(!sel)return;
+  const grp=getObjGroup(sel);
+  if(!grp)return;
+  const delta=sel.position.clone().sub(sel.userData._lastPos||sel.position);
+  if(delta.lengthSq()<0.000001)return;
+  grp.members.forEach(uid=>{
+    const o=objects.find(o=>o.uuid===uid);
+    if(!o||o===sel)return;
+    o.position.add(delta);
+  });
+  sel.userData._lastPos=sel.position.clone();
+});
+tCtrl.addEventListener('mouseDown',()=>{if(sel)sel.userData._lastPos=sel.position.clone();});
+
+// ═══════════════════════════════════════════
+// OUTLINER
+// ═══════════════════════════════════════════
+function refreshList(){
+  const ul=document.getElementById('obj-list'), q=document.getElementById('search-obj').value.toLowerCase();
+  ul.innerHTML='';
+  const filtered=objects.filter(o=>o.userData.name.toLowerCase().includes(q));
+  document.getElementById('obj-count').textContent=`${filtered.length}/${objects.length}`;
+
+  // Build group map
+  const renderedInGroup=new Set();
+  // Render groups first
+  groups.forEach(grp=>{
+    const grpObjs=grp.members.map(uid=>filtered.find(o=>o.uuid===uid)).filter(Boolean);
+    if(!grpObjs.length)return;
+    grpObjs.forEach(o=>renderedInGroup.add(o.uuid));
+    // Group header
+    const header=document.createElement('div'); header.className='group-header';
+    header.innerHTML=`<span style="color:${grp.color}">📁</span><span style="flex:1">${grp.name}</span><span style="font-size:9px;color:var(--muted)">${grpObjs.length}x</span><span style="cursor:pointer;color:var(--red);font-size:10px;padding:0 4px" onclick="dissolveGroup(${grp.id})" title="Dissolve Group">✕</span>`;
+    ul.appendChild(header);
+    // Children
+    const children=document.createElement('div'); children.className='group-children';
+    grpObjs.forEach(obj=>children.appendChild(makeObjLi(obj, grp)));
+    ul.appendChild(children);
+  });
+
+  // Render ungrouped
+  filtered.forEach(obj=>{
+    if(renderedInGroup.has(obj.uuid))return;
+    ul.appendChild(makeObjLi(obj,null));
+  });
+
+  refreshAirList(); updateStatusBar();
+  // Update multiSel hint
+  const hint=document.getElementById('multi-hint');
+  if(hint) hint.style.display=multiSel.length>0?'none':'block';
+}
+
+function makeObjLi(obj, grp){
+  const li=document.createElement('li');
+  const isMultiSel=multiSel.includes(obj);
+  if(isMultiSel) li.classList.add('multi-sel');
+  else if(obj===sel) li.classList.add(obj.userData.isAirBlock?'air-sel':'sel');
+  if(obj.userData.isAirBlock) li.style.opacity=obj.visible?'1':'0.4';
+  const matLabel=obj.userData.isAirBlock?'🌬Air':(DB[obj.userData.wallType]?.name.split(' ')[0]||'?');
+  const grpDot=grp?`<span style="color:${grp.color};font-size:9px;margin-right:2px">●</span>`:'';
+  const nameSpan=document.createElement('span'); nameSpan.className='obj-name';
+  nameSpan.title=obj.userData.name;
+  nameSpan.innerHTML=`${grpDot}${obj.userData.name}<span style="color:${obj.userData.isAirBlock?'var(--accent2)':'var(--muted)'};font-size:10px"> (${matLabel})</span>`;
+  const icons=document.createElement('span'); icons.className='obj-icons';
+  const mkBtn=(ico,title,color,fn)=>{const s=document.createElement('span');s.className='oi';s.title=title;s.textContent=ico;if(color)s.style.color=color;s.addEventListener('click',e=>{e.stopPropagation();fn();});return s;};
+  icons.appendChild(mkBtn(obj.visible?'👁️':'🕶️','Toggle',null,()=>{
+    obj.visible=!obj.visible;
+    if(obj.userData.brickMesh) obj.userData.brickMesh.visible=obj.visible;
+    // If this is an AirBlock, sync visibility of hole edges on all walls that cut with it
+    if(obj.userData.isAirBlock){
+      // toggle child edge outline lines
+      obj.children.filter(c=>c.userData.isHoleMesh).forEach(c=>{ c.visible=obj.visible; });
+      // toggle split meshes on walls cut by this ab
+      objects.filter(w=>!w.userData.isAirBlock&&w.userData.airCuts?.some(c=>c.abId===obj.uuid))
+        .forEach(wall=>{
+          if(wall.userData.splitMeshes) wall.userData.splitMeshes.forEach(m=>{ m.visible=obj.visible; });
+          if(!obj.visible){ wall.material.visible = !wall.userData.showBricks; }
+          else { wall.material.visible = false; }
+        });
+    }
+    if(!obj.visible&&sel===obj) selectObj(null);
+    refreshList();
+  }));
+  icons.appendChild(mkBtn('✎','Rename',null,()=>{const n=prompt('ชื่อใหม่:',obj.userData.name);if(n?.trim()){obj.userData.name=n.trim();refreshList();};}));
+  if(obj.userData.isAirBlock&&sel&&!sel.userData.isAirBlock){icons.appendChild(mkBtn('✂️','Cut this Air from wall',null,()=>{cutAirFromWall(obj,sel);refreshList();}));}
+  if(!obj.userData.isAirBlock) icons.appendChild(mkBtn('🔢','Calc',null,()=>{selectObj(obj);calcSingle();}));
+  icons.appendChild(mkBtn('❌','Delete','var(--red)',()=>deleteObj(obj)));
+  li.appendChild(nameSpan); li.appendChild(icons);
+  li.addEventListener('click',e=>{
+    if(e.target.classList.contains('oi'))return;
+    if(e.ctrlKey||e.metaKey){toggleMultiSel(obj);}
+    else if(e.shiftKey){rangeSelectTo(obj);}
+    else{multiSel=[];selectObj(obj);}
+  });
+  return li;
+}
+
+window.filterView=function(type,chip){
+  document.querySelectorAll('.fchip').forEach(c=>c.classList.remove('on')); chip?.classList.add('on');
+  objects.forEach(o=>{o.visible=type==='all'||o.userData.wallType===type||o.userData.isAirBlock;});
+  if(sel&&!sel.visible) selectObj(null);
+  refreshList();
+};
+
+// ═══════════════════════════════════════════
+// MATERIAL MANAGER
+// ═══════════════════════════════════════════
+window.previewUnits=function(){
+  const w=parseFloat(document.getElementById('m-w').value)||0, h=parseFloat(document.getElementById('m-h').value)||0;
+  const l=parseFloat(document.getElementById('m-l').value)||0, g=parseFloat(document.getElementById('m-gap').value)||0;
+  document.getElementById('m-preview').textContent=(h>0&&l>0)?(10000/((l+g)*(h+g))).toFixed(2):'0';
+};
+window.loadMatEditor=function(){
+  const k=document.getElementById('mat-sel').value; if(!k) return;
+  const m=DB[k];
+  document.getElementById('m-name').value=m.name; document.getElementById('m-color').value=m.color;
+  document.getElementById('m-w').value=m.unitW||0; document.getElementById('m-h').value=m.unitH||0;
+  document.getElementById('m-l').value=m.unitL||0; document.getElementById('m-gap').value=m.gap||0;
+  document.getElementById('m-mortar').value=m.mortarPerSqm||0; document.getElementById('m-sand').value=m.sandPerSqm||0;
+  document.getElementById('m-type').value=m.calcType||'unit'; document.getElementById('btn-del-mat').style.display='block';
+  previewUnits();
+};
+window.newMat=function(){
+  document.getElementById('mat-sel').value=''; document.getElementById('m-name').value='New Material';
+  document.getElementById('m-color').value='#aaaaaa'; document.getElementById('btn-del-mat').style.display='none';
+  ['m-w','m-h','m-l','m-mortar','m-sand'].forEach(id=>document.getElementById(id).value=0);
+  document.getElementById('m-gap').value=1.5;
+};
+window.saveMat=function(){
+  const name=document.getElementById('m-name').value.trim(); if(!name) return alert('ต้องใส่ชื่อ');
+  let k=document.getElementById('mat-sel').value||(name.toLowerCase().replace(/\s+/g,'_')+'_'+Date.now());
+  const w=parseFloat(document.getElementById('m-w').value)||0, h=parseFloat(document.getElementById('m-h').value)||0;
+  const l=parseFloat(document.getElementById('m-l').value)||0, g=parseFloat(document.getElementById('m-gap').value)||0;
+  DB[k]={name,color:document.getElementById('m-color').value,calcType:document.getElementById('m-type').value,
+    unitW:w,unitH:h,unitL:l,gap:g,unitsPerSqm:(h>0&&l>0)?10000/((l+g)*(h+g)):0,
+    mortarPerSqm:parseFloat(document.getElementById('m-mortar').value)||0,sandPerSqm:parseFloat(document.getElementById('m-sand').value)||0};
+  objects.forEach(o=>{if(o.userData.wallType===k)o.material.color.set(DB[k].color);});
+  populateUI(); refreshList(); toast('✅ บันทึกวัสดุแล้ว');
+};
+window.deleteMat=function(){
+  const k=document.getElementById('mat-sel').value; if(!k||!confirm('ลบ?')) return;
+  delete DB[k]; populateUI(); refreshList();
+};
+
+// ═══════════════════════════════════════════
+// REBAR DESIGNER
+// ═══════════════════════════════════════════
+function rbP(){
+  return {type:document.getElementById('rb-type').value,
+    w:parseFloat(document.getElementById('rb-w').value)||30, h:parseFloat(document.getElementById('rb-h').value)||30,
+    count:parseInt(document.getElementById('rb-count').value)||8, dia:parseFloat(document.getElementById('rb-dia').value)||16,
+    stirDia:parseFloat(document.getElementById('rb-stir-dia').value)||9, stirSp:parseFloat(document.getElementById('rb-stir-sp').value)||20,
+    cover:parseFloat(document.getElementById('rb-cover').value)||3, len:parseFloat(document.getElementById('rb-len').value)||3};
+}
+
+window.rbPreview=function(){
+  const p=rbP(); drawRbCanvas(p); updateRbStats(p);
+};
+
+function drawRbCanvas(p){
+  const cvs=document.getElementById('rb-canvas'); if(!cvs) return;
+  const ctx=cvs.getContext('2d'); const CW=cvs.width,CH=cvs.height;
+  ctx.clearRect(0,0,CW,CH);
+  const sc=Math.min((CW-30)/Math.max(p.w,p.h),(CH-16)/Math.max(p.w,p.h))*0.8;
+  const ox=CW/2, oy=CH/2;
+  const isRound=(p.type==='col_round');
+  const isL=(p.type==='col_l'), isT=(p.type==='col_t');
+  const sw=p.w*sc, sh=(isRound?p.w:p.h)*sc;
+  ctx.fillStyle='#8fa3a840'; ctx.strokeStyle='#8fa3a8'; ctx.lineWidth=1.5;
+
+  // Draw cross section
+  if(isRound){
+    const r=sw/2;
+    ctx.beginPath(); ctx.arc(ox,oy,r,0,Math.PI*2); ctx.fill(); ctx.stroke();
+    // stirrup
+    ctx.strokeStyle='#fb923c'; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.arc(ox,oy,r-p.cover*sc,0,Math.PI*2); ctx.stroke();
+    // bars
+    for(let i=0;i<p.count;i++){
+      const a=(i/p.count)*Math.PI*2;
+      const br=r-p.cover*sc-(p.stirDia/2)*sc/10;
+      ctx.fillStyle='#fb923c';
+      ctx.beginPath(); ctx.arc(ox+br*Math.cos(a),oy+br*Math.sin(a),Math.max((p.dia/2)*sc/10,2.5),0,Math.PI*2); ctx.fill();
+    }
+  } else if(isL){
+    ctx.fillRect(ox-sw/2,oy-sh/2,sw/2,sh);
+    ctx.fillRect(ox-sw/2,oy+sh/2-sh/3,sw,sh/3);
+    ctx.strokeRect(ox-sw/2,oy-sh/2,sw/2,sh);
+    ctx.strokeRect(ox-sw/2,oy+sh/2-sh/3,sw,sh/3);
+    drawSqBars(ctx,p,ox-sw/4,oy,sw/2,sh,sc);
+  } else if(isT){
+    ctx.fillRect(ox-sw/4,oy-sh/2,sw/2,sh);
+    ctx.fillRect(ox-sw/2,oy-sh/2,sw,sh/3);
+    ctx.strokeRect(ox-sw/4,oy-sh/2,sw/2,sh);
+    ctx.strokeRect(ox-sw/2,oy-sh/2,sw,sh/3);
+    drawSqBars(ctx,p,ox,oy-sh/4,sw/2,sh/2,sc);
+  } else {
+    ctx.fillRect(ox-sw/2,oy-sh/2,sw,sh);
+    ctx.strokeRect(ox-sw/2,oy-sh/2,sw,sh);
+    const cp=p.cover*sc; ctx.strokeStyle='#fb923c'; ctx.lineWidth=1;
+    ctx.strokeRect(ox-sw/2+cp,oy-sh/2+cp,sw-cp*2,sh-cp*2);
+    drawSqBars(ctx,p,ox,oy,sw,sh,sc);
+  }
+  ctx.fillStyle='#64748b'; ctx.font='9px JetBrains Mono';
+  ctx.fillText(`${p.w}×${p.h}cm | DB${p.dia}×${p.count} | RB${p.stirDia}@${p.stirSp}cm`,3,CH-3);
+}
+
+function drawSqBars(ctx,p,ox,oy,sw,sh,sc){
+  const cp=(p.cover+p.stirDia/10+p.dia/20)*sc;
+  const x0=ox-sw/2+cp,x1=ox+sw/2-cp,y0=oy-sh/2+cp,y1=oy+sh/2-cp;
+  const n=p.count, corners=[[x0,y0],[x1,y0],[x1,y1],[x0,y1]];
+  const pts=[...corners]; if(n>4){const extra=n-4,pS=Math.floor(extra/4),rem=extra-pS*4;
+    [[x0,y0,x1,y0,pS+(rem>0?1:0)],[x1,y0,x1,y1,pS+(rem>1?1:0)],[x1,y1,x0,y1,pS+(rem>2?1:0)],[x0,y1,x0,y0,pS]].forEach(([ax,ay,bx,by,c])=>{
+      for(let i=1;i<=c;i++){const t=i/(c+1);pts.push([ax+t*(bx-ax),ay+t*(by-ay)]);}})}
+  pts.slice(0,n).forEach(([bx,by])=>{ctx.fillStyle='#fb923c';ctx.beginPath();ctx.arc(bx,by,Math.max((p.dia/2)*sc/10,2.5),0,Math.PI*2);ctx.fill();});
+}
+
+function updateRbStats(p){
+  const el=document.getElementById('rb-stats'); if(!el) return;
+  const aBar=Math.PI*(p.dia/2)**2; const totalA=aBar*p.count;
+  const aSec=(p.type==='col_round')?Math.PI*(p.w/2)**2:p.w*p.h;
+  const rho=totalA/100/aSec*100;
+  const ok=rho>=1.0&&rho<=8.0; const rc=ok?'#22c55e':'#ef4444';
+  const desc={col_sq:'เสาสี่เหลี่ยม',col_round:'เสากลม',col_l:'เสา L',col_t:'เสา T',stiffener:'เสาเอ็น',beam:'คาน'}[p.type]||'';
+  el.innerHTML=`<div class="rb-stat-cell"><div style="color:var(--muted)">ประเภท</div><div class="rb-val" style="font-size:11px">${desc}</div></div>
+    <div class="rb-stat-cell"><div style="color:var(--muted)">Steel Ratio ρ</div><div class="rb-val" style="color:${rc}">${rho.toFixed(2)}%</div></div>
+    <div class="rb-stat-cell"><div style="color:var(--muted)">พื้นที่เหล็ก</div><div class="rb-val">${totalA.toFixed(0)} mm²</div></div>
+    <div class="rb-stat-cell"><div style="color:var(--muted)">ขนาดหน้าตัด</div><div class="rb-val">${p.w}×${p.h} cm</div></div>`;
+}
+
+window.applyRebarToSel=function(){
+  if(!sel||sel.userData.isAirBlock) return toast('เลือกวัตถุก่อน');
+  sel.userData.rebar=rbP();
+  clearRebar(sel);
+  if(rebar3DOn){sel.userData.showRebar=true;buildRebar3D(sel);}
+  if(bondStressOn) applyBondStressColor(sel,true);
+  toast(`✅ Applied rebar to "${sel.userData.name}"`);
+  snapshotState();
+};
+window.ctxApplyRebarToCtx=function(){if(ctxObj){sel=ctxObj;applyRebarToSel();}};
+
+window.calcRebarBOM=function(){
+  if(!sel||!sel.userData.rebar) return toast('Apply rebar ก่อน');
+  const p=sel.userData.rebar;
+  const box=new THREE.Box3().setFromObject(sel),sz=new THREE.Vector3(); box.getSize(sz);
+  const H=sz.y, wst=1.1;
+  const mainLen=H*p.count*wst;
+  const aBarCm=Math.PI*(p.dia/2)**2/100; // cm²
+  const mainKg=mainLen*aBarCm/10000*7850;
+  const stirSp=p.stirSp/100, stirCount=Math.ceil(H/stirSp)+1;
+  const perim=(p.type==='col_round')?Math.PI*(Math.min(p.w,p.h)/100):2*(p.w+p.h)/100;
+  const stirLen=stirCount*perim*wst, aStirCm=Math.PI*(p.stirDia/2)**2/100, stirKg=stirLen*aStirCm/10000*7850;
+  document.getElementById('rb-bom-out').innerHTML=`<div style="background:rgba(251,146,60,.1);border:1px solid rgba(251,146,60,.3);border-radius:5px;padding:7px">
+    <div style="font-weight:700;color:var(--orange);margin-bottom:4px">📦 Rebar BOM — ${sel.userData.name}</div>
+    <div>DB${p.dia}×${p.count}: ${mainLen.toFixed(2)}m ≈ <strong>${mainKg.toFixed(1)} กก.</strong></div>
+    <div>RB${p.stirDia}@${p.stirSp}cm: ${stirLen.toFixed(2)}m ≈ <strong>${stirKg.toFixed(1)} กก.</strong></div>
+    <div style="margin-top:4px;color:var(--accent)">รวม: ${(mainKg+stirKg).toFixed(1)} กก. | ${stirCount} ปลอก</div>
+  </div>`;
+};
+
+// Rebar 3D visualization
+function clearRebar(obj){
+  if(!obj||!obj.userData.rebarGroup) return;
+  obj.remove(obj.userData.rebarGroup); obj.userData.rebarGroup=null;
+}
+
+function buildRebar3D(obj){
+  clearRebar(obj);
+  if(!obj.userData.rebar||!obj.userData.showRebar) return;
+  const p=obj.userData.rebar;
+  const box=new THREE.Box3().setFromObject(obj),sz=new THREE.Vector3(); box.getSize(sz);
+  const H=sz.y, group=new THREE.Group();
+  const barMat=new THREE.MeshLambertMaterial({color:0xfb923c});
+  const stirMat=new THREE.MeshLambertMaterial({color:0xa855f7});
+  const barR=(p.dia/2)/1000, stirR=(p.stirDia/2)/1000;
+  const cover=p.cover/100, colW=p.w/100, colH=p.h/100;
+
+  if(p.type==='col_round'){
+    const radius=(Math.min(p.w,p.h)/2)/100-cover-p.stirDia/1000;
+    for(let i=0;i<p.count;i++){
+      const a=(i/p.count)*Math.PI*2;
+      const m=new THREE.Mesh(new THREE.CylinderGeometry(barR,barR,H,6),barMat);
+      m.position.set(radius*Math.cos(a),0,radius*Math.sin(a)); group.add(m);
+    }
+  } else {
+    const c=cover+p.stirDia/1000+barR, W=colW, D=colH;
+    const x0=c-W/2,x1=W/2-c,z0=c-D/2,z1=D/2-c;
+    const corners=[[x0,z0],[x1,z0],[x1,z1],[x0,z1]]; let pts=[...corners];
+    if(p.count>4){const ex=p.count-4,pS=Math.floor(ex/4),r2=ex-pS*4;
+      [[x0,z0,x1,z0,pS+(r2>0?1:0)],[x1,z0,x1,z1,pS+(r2>1?1:0)],[x1,z1,x0,z1,pS+(r2>2?1:0)],[x0,z1,x0,z0,pS]].forEach(([ax,az,bx,bz,c2])=>{
+        for(let i=1;i<=c2;i++){const t=i/(c2+1);pts.push([ax+t*(bx-ax),az+t*(bz-az)]);}})}
+    pts.slice(0,p.count).forEach(([bx,bz])=>{const m=new THREE.Mesh(new THREE.CylinderGeometry(barR,barR,H,6),barMat);m.position.set(bx,0,bz);group.add(m);});
+  }
+  // Stirrups
+  const stirSp=p.stirSp/100, sc=Math.ceil(H/stirSp)+1;
+  const hw=colW/2-cover, hd=colH/2-cover;
+  for(let i=0;i<=sc;i++){
+    const y=-H/2+i*stirSp;
+    const corners2=[[-hw,-hd],[hw,-hd],[hw,hd],[-hw,hd],[-hw,-hd]];
+    for(let j=0;j<4;j++){
+      const [ax,az]=corners2[j],[bx,bz]=corners2[j+1];
+      const len=Math.sqrt((bx-ax)**2+(bz-az)**2);
+      const m=new THREE.Mesh(new THREE.CylinderGeometry(stirR,stirR,len,5),stirMat);
+      m.position.set((ax+bx)/2,y,(az+bz)/2);
+      if(Math.abs(ax-bx)<0.001){m.rotation.x=Math.PI/2;}else{m.rotation.z=Math.PI/2;}
+      group.add(m);
+    }
+  }
+  obj.add(group); obj.userData.rebarGroup=group;
+}
+
+window.toggleRebar3D=function(){
+  rebar3DOn=document.getElementById('chk-rebar-3d').checked;
+  objects.forEach(obj=>{
+    if(obj.userData.rebar){
+      obj.userData.showRebar=rebar3DOn;
+      if(rebar3DOn)buildRebar3D(obj); else clearRebar(obj);
+    }
+  });
+};
+
+// Bond stress heatmap on wall surface
+function applyBondStressColor(obj,on){
+  if(!on){
+    const mat=DB[obj.userData.wallType]; if(mat) obj.material.color.set(mat.color);
+    obj.material.vertexColors=false; return;
+  }
+  // stress = max at edges/corners where rebar sits
+  const geo=obj.geometry; if(!geo.attributes.position) return;
+  const pos=geo.attributes.position, cols=new Float32Array(pos.count*3);
+  for(let i=0;i<pos.count;i++){
+    const lx=(pos.getX(i)+0.5),ly=(pos.getY(i)+0.5);
+    const dx=Math.min(lx,1-lx)*2, dy=Math.min(ly,1-ly)*2;
+    const stress=1-Math.min(dx,dy); // 0=center(safe), 1=edge(high stress)
+    cols[i*3]=stress>0.5?1:stress*2; cols[i*3+1]=stress<0.5?1:(1-stress)*2; cols[i*3+2]=0.1*(1-stress);
+  }
+  geo.setAttribute('color',new THREE.BufferAttribute(cols,3));
+  obj.material.vertexColors=true;
+}
+
+window.toggleBondStress=function(){
+  bondStressOn=document.getElementById('chk-bond-stress').checked;
+  objects.forEach(obj=>{if(!obj.userData.isAirBlock&&obj.userData.rebar)applyBondStressColor(obj,bondStressOn);});
+};
+
+// ═══════════════════════════════════════════
+// STRUCTURAL ANALYSIS
+// ═══════════════════════════════════════════
+const BOND_COLS=['#22c55e','#3b82f6','#f0a500','#a855f7','#ef4444','#06b6d4'];
+
+window.ctxAddToBond=function(){
+  if(!ctxObj) return;
+  if(!bondPending.includes(ctxObj.uuid)){
+    bondPending.push(ctxObj.uuid);
+    document.getElementById('bond-sel-count').textContent=bondPending.length;
+    document.getElementById('sb-bond').textContent=bondPending.length;
+    toast(`🔗 เพิ่ม "${ctxObj.userData.name}" (${bondPending.length} ชิ้น) — กด Create Bond`);
+  }
+};
+
+// Bond: also allow right-click Add to Bond Selection from context menu
+
+window.createBondGroup=function(){
+  if(bondPending.length<2) return toast('เลือกอย่างน้อย 2 ชิ้นก่อน (Shift+Click หรือ Right-Click → Add to Bond)');
+  const color=BOND_COLS[bondGroups.length%BOND_COLS.length];
+  bondGroups.push({id:Date.now(),members:[...bondPending],color});
+  bondPending=[]; document.getElementById('bond-sel-count').textContent=0; document.getElementById('sb-bond').textContent=0;
+  renderBondList(); runStructAnalysis(); snapshotState();
+  toast('✅ Bond Group สร้างแล้ว');
+};
+
+window.unbondSelected=function(){
+  if(!sel) return;
+  bondGroups=bondGroups.filter(g=>!g.members.includes(sel.uuid));
+  bondPending=bondPending.filter(u=>u!==sel.uuid);
+  document.getElementById('bond-sel-count').textContent=bondPending.length;
+  renderBondList(); runStructAnalysis(); toast('✂ Unbond แล้ว');
+};
+
+function renderBondList(){
+  const el=document.getElementById('bond-list'); if(!el) return;
+  if(!bondGroups.length){el.innerHTML='<div style="color:var(--muted);font-size:10px">ยังไม่มี Bond Group</div>';return;}
+  el.innerHTML=bondGroups.map(g=>{
+    const names=g.members.map(uid=>{const o=objects.find(o=>o.uuid===uid);return o?o.userData.name:'?';}).join(' + ');
+    return `<div class="bond-item"><div class="bond-dot" style="background:${g.color}"></div>
+      <span style="flex:1;font-size:10px">${names}</span>
+      <span style="cursor:pointer;color:var(--red);font-size:11px" onclick="bondGroups=bondGroups.filter(g=>g.id!==${g.id});renderBondList();runStructAnalysis()">✕</span></div>`;
+  }).join('');
+}
+
+window.runStructAnalysis=function(){
+  const dl=parseFloat(document.getElementById('st-dl')?.value)||4.0;
+  const ll=parseFloat(document.getElementById('st-ll')?.value)||2.0;
+  const floors=parseInt(document.getElementById('st-floors')?.value)||1;
+  const fc_user=parseFloat(document.getElementById('st-fc')?.value)||25;
+  const Wu=(1.2*dl+1.6*ll)*floors; // LRFD factored load kN/m²
+
+  const results=[];
+  objects.filter(o=>o.visible&&!o.userData.isAirBlock).forEach(obj=>{
+    const box=new THREE.Box3().setFromObject(obj),sz=new THREE.Vector3(); box.getSize(sz);
+    const planArea=sz.x*sz.z; // m²
+
+    // Material compressive strength
+    const mat=DB[obj.userData.wallType]; let fc=fc_user;
+    if(mat){if(mat.name.includes('Brick')||mat.name.includes('อิฐ'))fc=5;
+      else if(mat.name.includes('Block'))fc=8;
+      else if(mat.name.includes('Concrete')||mat.name.includes('คอนกรีต'))fc=fc_user;
+      else if(mat.name.includes('Earth')||mat.name.includes('ดิน'))fc=1.5;}
+
+    // Rebar bonus (simplified ACI 318 short column Pn=0.85f'c*Ag + fy*As)
+    let Pn=0.85*fc*planArea*1000; // kN (fc in MPa, area in m²→×10⁶mm²)
+    if(obj.userData.rebar){
+      const p=obj.userData.rebar;
+      const Ag=(p.w*p.h); // cm²
+      const As=Math.PI*(p.dia/2)**2*p.count/100; // cm²
+      const fy=400; // MPa SD40
+      Pn=(0.85*fc_user*(Ag-As)*100+fy*As*100)*0.8/1000; // kN
+    }
+
+    // Bond group — distribute load evenly among bonded members
+    let bondBonus=1, groupColor=null;
+    bondGroups.forEach(g=>{
+      if(g.members.includes(obj.uuid)){ bondBonus=g.members.length; groupColor=g.color; }
+    });
+
+    const Pu=Wu*planArea/bondBonus; // kN demanded
+    const DCratio=Pu/Math.max(Pn,1);
+    results.push({obj,planArea,Pn:Pn.toFixed(1),Pu:Pu.toFixed(1),DCratio,bondBonus,fc,groupColor});
+  });
+
+  // Heatmap coloring
+  objects.filter(o=>!o.userData.isAirBlock).forEach(obj=>{
+    const r=results.find(x=>x.obj===obj);
+    if(!r){const m=DB[obj.userData.wallType];if(m)obj.material.color.set(m.color);return;}
+    if(heatmapOn){
+      const t=Math.min(r.DCratio,1); const col=new THREE.Color(); col.setHSL((1-t)*0.33,0.9,0.42);
+      obj.material.color.copy(col); obj.material.vertexColors=false;
+    } else if(!bondStressOn) {
+      const m=DB[obj.userData.wallType]; if(m) obj.material.color.set(m.color);
+    }
+    // Bond group outline color
+    if(r.groupColor&&outLine&&outLine.parent===scene&&obj===sel){
+      outLine.material.color.set(r.groupColor);
+    }
+  });
+
+  // Load flow arrows
+  arrowGroup.clear();
+  if(arrowsOn){
+    results.forEach(r=>{
+      const box=new THREE.Box3().setFromObject(r.obj),ct=new THREE.Vector3(); box.getCenter(ct);
+      const len=Math.min(Math.max(r.DCratio*3,0.5),5);
+      const col=new THREE.Color(); col.setHSL((1-Math.min(r.DCratio,1))*0.33,0.9,0.45);
+      arrowGroup.add(new THREE.ArrowHelper(new THREE.Vector3(0,-1,0),new THREE.Vector3(ct.x,box.max.y+0.4,ct.z),len,col,len*.2,len*.12));
+    });
+  }
+
+  // Result text
+  const resEl=document.getElementById('struct-result'); if(!resEl) return;
+  if(!results.length){resEl.innerHTML='<div style="color:var(--muted)">ไม่มีวัตถุ</div>';return;}
+  const worst=results.reduce((a,b)=>a.DCratio>b.DCratio?a:b);
+  const status=worst.DCratio<0.5?'🟢 ปลอดภัย':worst.DCratio<0.75?'🟡 ตรวจสอบ':worst.DCratio<1?'🟠 ระวัง!':'🔴 วิกฤต!';
+  resEl.innerHTML=`<div style="background:rgba(34,197,94,.06);border:1px solid rgba(34,197,94,.25);border-radius:5px;padding:7px">
+    <div style="font-weight:700;margin-bottom:3px">${status}</div>
+    <div style="font-size:10px">Wu = ${Wu.toFixed(1)} kN/m² (1.2DL+1.6LL)</div>
+    <div style="font-size:10px">Worst D/C: <strong>${(worst.DCratio*100).toFixed(1)}%</strong> (${worst.obj.userData.name})</div>
+    <div style="font-size:10px">Bond Groups: ${bondGroups.length} | f'c: ${fc_user} MPa</div>
+  </div>`;
+  const barsEl=document.getElementById('load-bars'); if(!barsEl) return;
+  barsEl.innerHTML=results.slice(0,8).map(r=>{
+    const pct=Math.min(r.DCratio*100,100); const col=`hsl(${(1-Math.min(r.DCratio,1))*120},75%,42%)`;
+    const bg=r.DCratio>1?'#ef444422':r.DCratio>0.6?'#eab30822':'#22c55e18';
+    return `<div class="load-bar-wrap" style="background:${bg}">
+      <div class="load-bar-label"><span>${r.obj.userData.name}${r.groupColor?` <span style="color:${r.groupColor}">●</span>`:''}</span><span style="font-family:var(--mono);color:${col}">${pct.toFixed(1)}%</span></div>
+      <div class="load-bar" style="width:${pct}%;background:${col}"></div>
+    </div>`;
+  }).join('');
+};
+
+window.toggleHeatmap=function(){heatmapOn=document.getElementById('chk-heatmap').checked;runStructAnalysis();};
+window.toggleArrows=function(){arrowsOn=document.getElementById('chk-arrows').checked;runStructAnalysis();};
+
+// ═══════════════════════════════════════════
+// BLUEPRINT DRAWING
+// ═══════════════════════════════════════════
+window.toggleDrawMode=function(force){
+  drawMode=typeof force==='boolean'?force:!drawMode;
+  const btn=document.getElementById('btn-draw'), pb=document.getElementById('plane-box');
+  if(drawMode){btn.classList.add('active');pb.style.display='block';selectObj(null);setPlane('XZ');renderer.domElement.style.cursor='crosshair';}
+  else{btn.classList.remove('active');pb.style.display='none';clearDraw();renderer.domElement.style.cursor='default';resetGrid();}
+};
+window.setPlane=function(axis){
+  drawPlane=axis; ['xz','xy','yz'].forEach(p=>document.getElementById('pl-'+p)?.classList.remove('active'));
+  document.getElementById('pl-'+axis.toLowerCase())?.classList.add('active'); resetGrid();
+  if(axis==='XY')rayPlane.rotation.set(0,0,0); else if(axis==='YZ')rayPlane.rotation.set(0,-Math.PI/2,0); else rayPlane.rotation.set(-Math.PI/2,0,0);
+};
+function resetGrid(){
+  scene.remove(gridRef); gridRef=new THREE.GridHelper(40,40,0x2a3044,0x1c2130);
+  if(drawPlane==='XY')gridRef.rotation.x=Math.PI/2; else if(drawPlane==='YZ')gridRef.rotation.z=Math.PI/2;
+  scene.add(gridRef);
+}
+function addDrawPt(pt){
+  drawPts.push(pt.clone());
+  const m=new THREE.Mesh(new THREE.SphereGeometry(0.06),new THREE.MeshBasicMaterial({color:0xf0a500}));
+  m.position.copy(pt); scene.add(m); drawMarkers.push(m);
+  if(drawPts.length>1){if(drawLine)scene.remove(drawLine);const p2=[...drawPts,drawPts[0]];drawLine=new THREE.Line(new THREE.BufferGeometry().setFromPoints(p2),new THREE.LineBasicMaterial({color:0xf0a500}));scene.add(drawLine);}
+}
+window.finishExtrude=function(){
+  if(drawPts.length<3)return alert('วาดอย่างน้อย 3 จุด');
+  const shape=new THREE.Shape();
+  if(drawPlane==='XZ'){shape.moveTo(drawPts[0].x,drawPts[0].z);drawPts.slice(1).forEach(p=>shape.lineTo(p.x,p.z));}
+  else if(drawPlane==='XY'){shape.moveTo(drawPts[0].x,drawPts[0].y);drawPts.slice(1).forEach(p=>shape.lineTo(p.x,p.y));}
+  else{shape.moveTo(drawPts[0].z,drawPts[0].y);drawPts.slice(1).forEach(p=>shape.lineTo(p.z,p.y));}
+  const geo=new THREE.ExtrudeGeometry(shape,{depth:0.2,bevelEnabled:false});
+  if(drawPlane==='XZ')geo.rotateX(Math.PI/2); else if(drawPlane==='YZ')geo.rotateY(Math.PI/2);
+  geo.computeBoundingBox(); const ctr=new THREE.Vector3(); geo.boundingBox.getCenter(ctr); geo.translate(-ctr.x,-ctr.y,-ctr.z);
+  const mesh=new THREE.Mesh(geo,new THREE.MeshLambertMaterial()); mesh.position.copy(ctr);
+  mesh.userData.drawPoints=drawPts.map(p=>({x:p.x,y:p.y,z:p.z}));
+  addMesh(mesh,`Custom Wall ${objects.length+1}`,'brick'); toggleDrawMode(false);
+};
+function clearDraw(){drawPts=[];drawMarkers.forEach(m=>scene.remove(m));drawMarkers=[];if(drawLine){scene.remove(drawLine);drawLine=null;}}
+
+// ═══════════════════════════════════════════
+// UNDO / REDO
+// ═══════════════════════════════════════════
+function snapshotState(){
+  history=history.slice(0,historyIdx+1);
+  const snap=objects.map(obj=>{
+    const box=new THREE.Box3().setFromObject(obj),sz=new THREE.Vector3(); box.getSize(sz);
+    return{
+      name:obj.userData.name,wallType:obj.userData.wallType,showBricks:obj.userData.showBricks,
+      isAirBlock:obj.userData.isAirBlock||false,
+      rebar:obj.userData.rebar?{...obj.userData.rebar}:null,
+      airCuts:obj.userData.airCuts?JSON.parse(JSON.stringify(obj.userData.airCuts)):null,
+      holeBoxes:obj.userData.holeBoxes?JSON.parse(JSON.stringify(obj.userData.holeBoxes)):null,
+      drawPoints:obj.userData.drawPoints?JSON.parse(JSON.stringify(obj.userData.drawPoints)):null,
+      position:obj.position.toArray(),rotation:obj.rotation.toArray(),scale:obj.scale.toArray(),
+      dims:[sz.x,sz.y,sz.z]
+    };
+  });
+  history.push({objects:snap,groups:JSON.parse(JSON.stringify(groups))});
+  if(history.length>50)history.shift(); else historyIdx++;
+  updateUndoBtns();
+}
+
+function restoreState(snap){
+  const snapObjs=snap.objects||snap;
+  if(snap.groups!==undefined)groups=JSON.parse(JSON.stringify(snap.groups));
+  multiSel=[];
+
+  // Full cleanup: split meshes, hole meshes, bricks, rebars, objects
+  [...objects].forEach(o=>{
+    clearBricks(o); clearRebar(o);
+    clearHoleMeshes(o);
+    if(o.userData.isAirBlock){ [...o.children].filter(c=>c.userData.isHoleMesh).forEach(c=>{o.remove(c);c.geometry?.dispose();}); }
+    if(o.userData.splitMeshes){ o.userData.splitMeshes.forEach(m=>{scene.remove(m);m.geometry?.dispose();}); }
+    scene.remove(o); o.geometry?.dispose();
+  });
+  objects=[];
+
+  // Rebuild objects from snapshot
+  snapObjs.forEach(item=>{
+    let mesh;
+    if(item.drawPoints){
+      const shape=new THREE.Shape(),pts=item.drawPoints;
+      shape.moveTo(pts[0].x,pts[0].y);pts.slice(1).forEach(p=>shape.lineTo(p.x,p.y));
+      const geo=new THREE.ExtrudeGeometry(shape,{depth:item.dims[1],bevelEnabled:false});
+      geo.rotateX(-Math.PI/2);
+      mesh=new THREE.Mesh(geo,new THREE.MeshLambertMaterial());
+      mesh.position.fromArray(item.position);mesh.rotation.fromArray(item.rotation);
+    } else if(item.isAirBlock){
+      const[w,h,d]=[item.dims[0],item.dims[1],item.dims[2]];
+      const geo=new THREE.BoxGeometry(w,h,d);
+      mesh=new THREE.Mesh(geo,new THREE.MeshBasicMaterial({color:0x3b82f6,transparent:true,opacity:0.22,depthWrite:false,side:THREE.DoubleSide}));
+      mesh.add(new THREE.LineSegments(new THREE.EdgesGeometry(geo),new THREE.LineBasicMaterial({color:0x3b82f6})));
+      mesh.renderOrder=2;
+      mesh.position.fromArray(item.position);mesh.rotation.fromArray(item.rotation);
+    } else {
+      // Recreate geometry at correct world size (dims already in world units)
+      const[w,h,d]=item.dims;
+      mesh=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),new THREE.MeshLambertMaterial());
+      mesh.position.fromArray(item.position);mesh.rotation.fromArray(item.rotation);
+      // No scale — geometry is sized correctly
+    }
+    mesh.userData={
+      name:item.name,wallType:item.wallType,showBricks:item.showBricks,
+      isAirBlock:item.isAirBlock||false,
+      rebar:item.rebar||null,
+      airCuts:item.airCuts||null,
+      holeBoxes:item.holeBoxes||null,
+      drawPoints:item.drawPoints||null,
+      brickMesh:null,rebarGroup:null,
+      holeMeshes:[],splitMeshes:[]
+    };
+    if(!item.isAirBlock&&DB[item.wallType])mesh.material.color.set(DB[item.wallType].color);
+    mesh.castShadow=!item.isAirBlock;mesh.receiveShadow=!item.isAirBlock;
+    scene.add(mesh);objects.push(mesh);
+  });
+
+  // Rebuild holes for walls that had cuts
+  objects.forEach(wall=>{
+    if(wall.userData.isAirBlock||!wall.userData.airCuts?.length) return;
+    wall.userData.airCuts.forEach(cut=>{
+      // Find matching air block by name (uuid changes on recreate)
+      const ab=objects.find(o=>o.userData.isAirBlock&&o.userData.name===cut.name);
+      if(!ab) return;
+      const abBox=new THREE.Box3().setFromObject(ab);
+      const wallBox=new THREE.Box3().setFromObject(wall);
+      if(!wallBox.intersectsBox(abBox)) return;
+      renderVisualHole(ab, wall, wallBox.clone().intersect(abBox));
+    });
+  });
+
+  // Rebuild bricks (after holes are set)
+  objects.forEach(mesh=>{
+    if(mesh.userData.showBricks) updateBricks(mesh);
+    if(mesh.userData.rebar&&rebar3DOn){mesh.userData.showRebar=true;buildRebar3D(mesh);}
+  });
+
+  selectObj(null);refreshList();
+}
+function undoAction(){if(historyIdx<=0)return;historyIdx--;restoreState(history[historyIdx]);updateUndoBtns();}
+function redoAction(){if(historyIdx>=history.length-1)return;historyIdx++;restoreState(history[historyIdx]);updateUndoBtns();}
+function updateUndoBtns(){
+  const u=document.getElementById('tb-undo'),r=document.getElementById('tb-redo');
+  if(u)u.disabled=historyIdx<=0; if(r)r.disabled=historyIdx>=history.length-1;
+}
+window.undoAction=undoAction; window.redoAction=redoAction;
+
+// ═══════════════════════════════════════════
+// SAVE / LOAD / EXPORT
+// ═══════════════════════════════════════════
+function serObj(obj){
+  const box=new THREE.Box3().setFromObject(obj),sz=new THREE.Vector3();box.getSize(sz);
+  return{type:obj.userData.drawPoints?'extrude':obj.userData.isAirBlock?'air':'cube',
+    name:obj.userData.name,wallType:obj.userData.wallType,isAirBlock:obj.userData.isAirBlock||false,
+    rebar:obj.userData.rebar||null,airCuts:obj.userData.airCuts||null,
+    transform:{position:obj.position.toArray(),rotation:obj.rotation.toArray(),scale:obj.scale.toArray(),dims:[sz.x,sz.y,sz.z]},
+    drawPoints:obj.userData.drawPoints||null,showBricks:obj.userData.showBricks||false};
+}
+window.saveProject=function(){
+  const data={version:'3.0',timestamp:new Date().toISOString(),materials:DB,bondGroups,groups,objects:objects.map(serObj)};
+  dl(new Blob([JSON.stringify(data,null,2)],{type:'application/smr'}),`project_${Date.now()}.smr`);
+};
+window.loadProject=function(input){
+  const file=input.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    try{
+      const data=JSON.parse(e.target.result);
+      if(data.materials)DB=data.materials;
+      if(data.bondGroups)bondGroups=data.bondGroups;
+      if(data.groups)groups=data.groups; else groups=[];
+      [...objects].forEach(o=>{clearBricks(o);clearRebar(o);scene.remove(o);o.geometry?.dispose();}); objects=[];
+      if(data.objects)data.objects.forEach(item=>{
+        let mesh;
+        const[w,h,d]=item.transform.dims||[1,1,1];
+        if(item.type==='extrude'&&item.drawPoints){
+          const shape=new THREE.Shape(),pts=item.drawPoints;
+          shape.moveTo(pts[0].x,pts[0].y);pts.slice(1).forEach(p=>shape.lineTo(p.x,p.y));
+          const geo=new THREE.ExtrudeGeometry(shape,{depth:h,bevelEnabled:false});geo.rotateX(-Math.PI/2);
+          mesh=new THREE.Mesh(geo,new THREE.MeshLambertMaterial());
+        } else if(item.type==='air'||item.isAirBlock){
+          const geo=new THREE.BoxGeometry(w,h,d);
+          mesh=new THREE.Mesh(geo,new THREE.MeshBasicMaterial({color:0x3b82f6,transparent:true,opacity:0.22,depthWrite:false,side:THREE.DoubleSide}));
+          mesh.add(new THREE.LineSegments(new THREE.EdgesGeometry(geo),new THREE.LineBasicMaterial({color:0x3b82f6})));
+          mesh.renderOrder=2;
+        } else {
+          mesh=new THREE.Mesh(new THREE.BoxGeometry(1,1,1),new THREE.MeshLambertMaterial());
+          mesh.scale.fromArray(item.transform.scale);
+        }
+        mesh.position.fromArray(item.transform.position);mesh.rotation.fromArray(item.transform.rotation);
+        mesh.userData={name:item.name,wallType:item.wallType,showBricks:item.showBricks||false,isAirBlock:item.isAirBlock||false,
+          rebar:item.rebar||null,airCuts:item.airCuts||null,drawPoints:item.drawPoints||null,brickMesh:null,rebarGroup:null};
+        if(!item.isAirBlock&&DB[item.wallType])mesh.material.color.set(DB[item.wallType].color);
+        mesh.castShadow=!item.isAirBlock;mesh.receiveShadow=!item.isAirBlock;
+        scene.add(mesh);objects.push(mesh);
+        if(mesh.userData.showBricks)updateBricks(mesh,true);
+      });
+      populateUI();refreshList();renderBondList();snapshotState();toast('✅ โหลดโปรเจค');
+    }catch(err){alert('โหลดผิดพลาด: '+err.message);}
+    input.value='';
+  };reader.readAsText(file);
+};
+window.exportBOMcsv=function(){
+  const rows=[['ชื่อวัสดุ','พื้นที่(m²)','ปริมาตร(m³)','จำนวน(ชิ้น)','ปูน(ถุง)','ทราย(m³)','AirCuts(m²)']];
+  const sum={};
+  objects.filter(o=>o.visible&&!o.userData.isAirBlock).forEach(obj=>{
+    const k=obj.userData.wallType; if(!sum[k])sum[k]={area:0,vol:0,units:0,cuts:0};
+    const d=calcObjectData(obj); sum[k].area+=d.area; sum[k].vol+=d.vol; sum[k].units+=d.unitsStd;
+    sum[k].cuts+=(obj.userData.airCuts||[]).reduce((s,c)=>s+c.area,0);
+  });
+  for(const[k,d]of Object.entries(sum)){const m=DB[k];if(!m)continue;
+    rows.push([m.name,d.area.toFixed(3),d.vol.toFixed(3),m.calcType==='unit'?Math.ceil(d.units).toString():'-',
+      (d.area*m.mortarPerSqm).toFixed(1),(d.area*m.sandPerSqm).toFixed(3),d.cuts.toFixed(3)]);}
+  dl(new Blob(['\uFEFF'+rows.map(r=>r.join(',')).join('\n')],{type:'text/csv;charset=utf-8'}),`BOM_${Date.now()}.csv`);
+};
+window.printBOM=function(){calcAll();setTimeout(()=>{const w=window.open('','_blank');
+  w.document.write(`<html><head><title>BOM Report</title><style>body{font-family:sans-serif;padding:20px}table{border-collapse:collapse;width:100%}th,td{border:1px solid #ccc;padding:5px}th{background:#f5f5f5}</style></head><body>
+  <h2>BOM — SMR Builder Pro v3</h2><p>${new Date().toLocaleDateString('th-TH')}</p>${document.getElementById('bom-content').innerHTML}</body></html>`);
+  w.print();},500);};
+window.updateExportStats=function(){
+  let a=0,v=0;objects.filter(o=>!o.userData.isAirBlock).forEach(o=>{const d=calcObjectData(o);a+=d.area;v+=d.vol;});
+  document.getElementById('exp-objs').textContent=objects.length;
+  document.getElementById('exp-area').textContent=a.toFixed(2)+' m²';
+  document.getElementById('exp-vol').textContent=v.toFixed(3)+' m³';
+};
+function dl(blob,name){const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;a.click();URL.revokeObjectURL(a.href);}
+
+// ═══════════════════════════════════════════
+// CONTEXT MENU
+// ═══════════════════════════════════════════
+let ctxObj=null;
+window.addEventListener('contextmenu',e=>{
+  e.preventDefault();
+  mouse.x=(e.clientX/container.clientWidth)*2-1; mouse.y=-(e.clientY/container.clientHeight)*2+1;
+  raycaster.setFromCamera(mouse,camera);
+  const hits=raycaster.intersectObjects(objects.filter(o=>o.visible&&!o.userData.brickMesh&&!o.userData.rebarGroup));
+  const ctx=document.getElementById('ctx-menu');
+  if(hits.length){
+    ctxObj=hits[0].object;selectObj(ctxObj);ctx.style.display='block';ctx.style.left=e.clientX+'px';ctx.style.top=e.clientY+'px';
+    // Show/hide cut option
+    const cutSep=document.getElementById('ctx-cut-sep'),cutItem=document.getElementById('ctx-cut-item');
+    if(sel&&sel.userData.isAirBlock&&ctxObj&&!ctxObj.userData.isAirBlock){
+      cutSep.style.display='block';cutItem.style.display='block';
+    } else {cutSep.style.display='none';cutItem.style.display='none';}
+    // Group cut option: if ctxObj is in a group that has both air+wall
+    const grp=getObjGroup(ctxObj);
+    const cutGrpSep=document.getElementById('ctx-cut-group-sep');
+    const cutGrpItem=document.getElementById('ctx-cut-group-item');
+    if(grp){
+      const mObjs=grp.members.map(uid=>objects.find(o=>o.uuid===uid)).filter(Boolean);
+      const hasAir=mObjs.some(o=>o.userData.isAirBlock);
+      const hasWall=mObjs.some(o=>!o.userData.isAirBlock);
+      if(hasAir&&hasWall){cutGrpSep.style.display='block';cutGrpItem.style.display='block';cutGrpItem.textContent=`✂️ Cut Block (กลุ่ม: ${grp.name})`;}
+      else{cutGrpSep.style.display='none';cutGrpItem.style.display='none';}
+      document.getElementById('ctx-remove-from-group-item').style.display='block';
+    } else {
+      cutGrpSep.style.display='none';cutGrpItem.style.display='none';
+      document.getElementById('ctx-remove-from-group-item').style.display='none';
+    }
+  } else ctx.style.display='none';
+});
+window.addEventListener('click',()=>document.getElementById('ctx-menu').style.display='none');
+window.ctxDuplicate=function(){
+  if(!ctxObj) return;
+  const box=new THREE.Box3().setFromObject(ctxObj),sz=new THREE.Vector3();box.getSize(sz);
+  const mesh=new THREE.Mesh(new THREE.BoxGeometry(sz.x,sz.y,sz.z),new THREE.MeshLambertMaterial());
+  mesh.position.copy(ctxObj.position);mesh.position.x+=sz.x+0.1;mesh.rotation.copy(ctxObj.rotation);
+  addMesh(mesh,ctxObj.userData.name+' copy',ctxObj.userData.wallType);
+};
+window.ctxFocus=function(){if(!ctxObj)return;const box=new THREE.Box3().setFromObject(ctxObj),ct=new THREE.Vector3();box.getCenter(ct);orbit.target.copy(ct);};
+window.ctxRename=function(){if(!ctxObj)return;const n=prompt('ชื่อใหม่:',ctxObj.userData.name);if(n?.trim()){ctxObj.userData.name=n.trim();refreshList();}};
+window.ctxCalcSingle=function(){if(ctxObj){selectObj(ctxObj);calcSingle();}};
+window.ctxToggleBrick=function(){if(!ctxObj)return;ctxObj.userData.showBricks=!ctxObj.userData.showBricks;if(sel===ctxObj)document.getElementById('chk-brick').checked=ctxObj.userData.showBricks;clearBricks(ctxObj);updateBricks(ctxObj);};
+window.ctxCutWithSelected=function(){
+  if(!ctxObj||ctxObj.userData.isAirBlock)return;
+  if(!sel||!sel.userData.isAirBlock){toast('❌ Select an Air Block first');return;}
+  cutAirFromWall(sel,ctxObj);
+  snapshotState();
+};
+
+// Cut Block via Group: if AirBlock & Wall are in same group, cut the wall
+window.ctxCutBlockInGroup=function(){
+  if(!ctxObj)return;
+  // Find the wall and the airblock within the same group
+  const grp=getObjGroup(ctxObj);
+  if(!grp)return toast('❌ วัตถุไม่อยู่ในกลุ่ม');
+  const memberObjs=grp.members.map(uid=>objects.find(o=>o.uuid===uid)).filter(Boolean);
+  const airBlocks=memberObjs.filter(o=>o.userData.isAirBlock);
+  const walls=memberObjs.filter(o=>!o.userData.isAirBlock);
+  if(!airBlocks.length)return toast('❌ ไม่พบ Air Block ในกลุ่มนี้');
+  if(!walls.length)return toast('❌ ไม่พบ Wall ในกลุ่มนี้');
+  let cutCount=0;
+  airBlocks.forEach(ab=>{
+    walls.forEach(wall=>{
+      const abBox=new THREE.Box3().setFromObject(ab);
+      const wallBox=new THREE.Box3().setFromObject(wall);
+      if(!wallBox.intersectsBox(abBox))return;
+      const inter=wallBox.clone().intersect(abBox);
+      const sz=new THREE.Vector3(); inter.getSize(sz);
+      const cutArea=Math.max(sz.x,sz.z)*sz.y;
+      if(cutArea<0.001)return;
+      if(!wall.userData.airCuts)wall.userData.airCuts=[];
+      wall.userData.airCuts=wall.userData.airCuts.filter(c=>c.abId!==ab.uuid);
+      wall.userData.airCuts.push({abId:ab.uuid,name:ab.userData.name,area:cutArea,w:Math.max(sz.x,sz.z),h:sz.y});
+      // Remove old holes for this pair then re-render
+      if(wall.userData.holeMeshes){ clearHoleMeshes(wall); }
+      renderVisualHole(ab, wall, inter);
+      cutCount++;
+    });
+  });
+  refreshAirList(); refreshList();
+  // Refresh bricks on affected walls
+  walls.filter(w=>w.userData.showBricks).forEach(w=>{clearBricks(w);updateBricks(w);});
+  snapshotState();
+  toast(`✂️ ตัดแล้ว ${cutCount} cut(s) ในกลุ่ม "${grp.name}" — BOM อัปเดต`);
+};
+
+window.ctxDelete=function(){if(ctxObj)deleteObj(ctxObj);};
+
+// ════ CUT MANAGEMENT ════
+let controlMode='cursor'; // 'hand' or 'cursor'
+function cutAirFromWall(airBlock,wall){
+  if(!airBlock||!wall||airBlock.userData.isAirBlock===wall.userData.isAirBlock)return;
+  const ab=airBlock.userData.isAirBlock?airBlock:wall;
+  const w=wall.userData.isAirBlock?airBlock:wall;
+  if(w.userData.isAirBlock)return toast('❌ Can only cut walls, not air blocks');
+  const abBox=new THREE.Box3().setFromObject(ab);
+  const wallBox=new THREE.Box3().setFromObject(w);
+  const inter=wallBox.clone().intersect(abBox);
+  const sz=new THREE.Vector3(); inter.getSize(sz);
+  const cutArea=Math.max(sz.x,sz.z)*sz.y;
+  if(cutArea<0.001)return toast('⚠️ Air block too small or not overlapping wall');
+  if(!w.userData.airCuts)w.userData.airCuts=[];
+  const existing=w.userData.airCuts.findIndex(c=>c.abId===ab.uuid);
+  if(existing>=0){
+    w.userData.airCuts.splice(existing,1);
+    clearHoleMeshes(w);
+    if(w.userData.splitMeshes){ w.userData.splitMeshes.forEach(m=>{scene.remove(m);m.geometry?.dispose();}); w.userData.splitMeshes=[]; }
+    w.userData.holeBoxes=[];
+    if(w.userData.airCuts.length===0){
+      clearWallStencil(w);
+      if(!w.userData.showBricks) w.material.visible=true;
+    } else {
+      w.userData.airCuts.forEach(c=>{
+        const abObj=objects.find(o=>o.uuid===c.abId); if(!abObj) return;
+        const abB=new THREE.Box3().setFromObject(abObj);
+        const wB=new THREE.Box3().setFromObject(w);
+        renderVisualHole(abObj,w,wB.clone().intersect(abB));
+      });
+    }
+    if(w.userData.showBricks){clearBricks(w);updateBricks(w);}
+    toast(`✂️ Removed cut from ${w.userData.name}`);
+  } else {
+    w.userData.airCuts.push({abId:ab.uuid,name:ab.userData.name,area:cutArea,w:Math.max(sz.x,sz.z),h:sz.y});
+    if(!w.userData.holeMeshes)w.userData.holeMeshes=[];
+    renderVisualHole(ab,w,inter);
+    if(w.userData.showBricks){clearBricks(w);updateBricks(w);}
+    toast(`✂️ Cut ${ab.userData.name} from ${w.userData.name}`);
+  }
+  refreshAirList();
+}
+window.cutAirFromWall=cutAirFromWall;
+
+window.setControlMode=function(mode){
+  controlMode=mode;
+  document.getElementById('tb-mode-hand').classList.toggle('on',mode==='hand');
+  document.getElementById('tb-mode-cursor').classList.toggle('on',mode==='cursor');
+  if(mode==='hand'){
+    orbit.enabled=true;
+    tCtrl.enabled=false;
+    if(sel)selectObj(null);
+    toast('🤚 Hand Mode - Use MMB/Scroll to rotate');
+  } else {
+    orbit.enabled=true;
+    tCtrl.enabled=true;
+    toast('🖱️ Cursor Mode - Click to select, drag to transform');
+  }
+};
+
+// ═══════════════════════════════════════════
+// PANEL MANAGEMENT
+// ═══════════════════════════════════════════
+window.togglePanel=function(id){
+  const el=document.getElementById(id); const vis=el.style.display!=='none';
+  el.style.display=vis?'none':'flex'; bringFront(el);
+  const tbId='tb-'+{p_tools:'tools',p_outline:'outline',p_calc:'calc',p_rebar:'rebar',p_struct:'struct',p_mat:'mat',p_export:'export'}[id.replace('-','_')];
+  document.getElementById(tbId)?.classList.toggle('on',!vis);
+  if(!vis&&id==='p-export')updateExportStats();
+};
+function showPanel(id,tbId){const el=document.getElementById(id);el.style.display='flex';bringFront(el);document.getElementById(tbId)?.classList.add('on');}
+window.closePanel=function(id,tbId){document.getElementById(id).style.display='none';document.getElementById(tbId)?.classList.remove('on');};
+window.minPanel=function(id){const b=document.getElementById(id).querySelector('.panel-body');b.style.display=b.style.display==='none'?'':'none';};
+function bringFront(el){document.querySelectorAll('.panel').forEach(p=>p.style.zIndex=100);el.style.zIndex=101;}
+function makeDraggable(p){
+  const head=document.getElementById(p.id+'-head'); if(!head) return;
+  let ox=0,oy=0,sx=0,sy=0;
+  head.onmousedown=e=>{if(e.target.classList.contains('ph-btn'))return;sx=e.clientX;sy=e.clientY;ox=p.offsetLeft;oy=p.offsetTop;bringFront(p);
+    document.onmousemove=e2=>{p.style.left=(ox+e2.clientX-sx)+'px';p.style.top=Math.max(40,oy+e2.clientY-sy)+'px';p.style.right='auto';p.style.bottom='auto';};
+    document.onmouseup=()=>{document.onmousemove=document.onmouseup=null;};};
+}
+document.querySelectorAll('.panel').forEach(p=>makeDraggable(p));
+
+// ═══════════════════════════════════════════
+// PROPS INPUTS
+// ═══════════════════════════════════════════
+['px','py','pz'].forEach(id=>document.getElementById(id).addEventListener('input',()=>{
+  if(!sel)return;
+  sel.position.set(parseFloat(document.getElementById('px').value)||0,parseFloat(document.getElementById('py').value)||0,parseFloat(document.getElementById('pz').value)||0);
+  if(outLine){outLine.position.copy(sel.position);outLine.quaternion.copy(sel.quaternion);}
+  updateDimLabels();
+  rebuildHolesForObj(sel);
+}));
+['rx','ry','rz'].forEach(id=>document.getElementById(id).addEventListener('input',()=>{
+  if(!sel)return;
+  sel.rotation.set(parseFloat(document.getElementById('rx').value||0)*THREE.MathUtils.DEG2RAD,parseFloat(document.getElementById('ry').value||0)*THREE.MathUtils.DEG2RAD,parseFloat(document.getElementById('rz').value||0)*THREE.MathUtils.DEG2RAD);
+  if(outLine)outLine.quaternion.copy(sel.quaternion);
+  clearBricks(sel);updateBricks(sel);updateDimLabels();
+  rebuildHolesForObj(sel);
+}));
+document.getElementById('prop-mat').addEventListener('change',e=>{
+  if(!sel||sel.userData.isAirBlock)return; sel.userData.wallType=e.target.value;
+  if(DB[e.target.value])sel.material.color.set(DB[e.target.value].color);
+  clearBricks(sel);updateBricks(sel);refreshList();
+});
+document.getElementById('chk-brick').addEventListener('change',e=>{
+  if(!sel||sel.userData.isAirBlock)return; sel.userData.showBricks=e.target.checked; clearBricks(sel);updateBricks(sel);
+});
+document.getElementById('chk-snap').addEventListener('change',e=>{
+  snapEnabled=e.target.checked; document.getElementById('sb-snap').textContent=snapEnabled?'ON':'OFF';
+});
+document.getElementById('chk-dim').addEventListener('change',e=>{showDim=e.target.checked;updateDimLabels();});
+
+// ═══════════════════════════════════════════
+// KEYBOARD
+// ═══════════════════════════════════════════
+window.addEventListener('keydown',e=>{
+  if(['INPUT','SELECT','TEXTAREA'].includes(document.activeElement.tagName))return;
+  if(e.ctrlKey||e.metaKey){
+    if(e.key==='z'){e.preventDefault();undoAction();return;}
+    if(e.key==='y'){e.preventDefault();redoAction();return;}
+    if(e.key==='c'){e.preventDefault();copyObj();return;}
+    if(e.key==='v'){e.preventDefault();pasteObj();return;}
+    if(e.key==='d'){e.preventDefault();if(ctxObj||sel){ctxObj=ctxObj||sel;ctxDuplicate();}return;}
+  }
+  if(e.key==='Delete'||e.key==='Backspace'){
+    if(multiSel.length>1){snapshotState();[...multiSel].forEach(o=>deleteObj(o,true));multiSel=[];refreshList();}
+    else if(sel){snapshotState();deleteObj(sel);}
+  }
+  // Shift+A = select all
+  if(e.shiftKey&&e.key.toLowerCase()==='a'){e.preventDefault();selectAllObjects();return;}
+  if(e.key==='Escape'){
+    if(drawMode)toggleDrawMode(false);
+    else if(multiSel.length>0){multiSel=[];selectObj(null);}
+    else selectObj(null);
+  }
+  if(e.key.toLowerCase()==='t')setMode('translate');
+  if(e.key.toLowerCase()==='r')setMode('scale');
+  if(e.key.toLowerCase()==='e')setMode('rotate');
+  if(e.key.toLowerCase()==='g')addWall();
+  if(e.key.toLowerCase()==='b'){if(sel&&!sel.userData.isAirBlock){sel.userData.showBricks=!sel.userData.showBricks;document.getElementById('chk-brick').checked=sel.userData.showBricks;clearBricks(sel);updateBricks(sel);}}
+  if(e.key.toLowerCase()==='f'&&sel){const box=new THREE.Box3().setFromObject(sel),ct=new THREE.Vector3();box.getCenter(ct);orbit.target.copy(ct);}
+  if(e.key.toLowerCase()==='m')setControlMode(controlMode==='hand'?'cursor':'hand');
+  if(e.key.toLowerCase()==='c')setControlMode('cursor');
+});
+
+window.setMode=function(mode){
+  tCtrl.setMode(mode);
+  ['move','rot','scale'].forEach(m=>document.getElementById('btn-'+m).classList.remove('active'));
+  const map={translate:'move',rotate:'rot',scale:'scale'}; document.getElementById('btn-'+map[mode])?.classList.add('active');
+  document.getElementById('sb-mode').textContent=mode;
+};
+
+// ═══════════════════════════════════════════
+// CLICK HANDLER
+// ═══════════════════════════════════════════
+renderer.domElement.addEventListener('click',e=>{
+  if(e.button!==0||mmb.active)return;
+  if(controlMode==='hand')return;
+  mouse.x=(e.clientX/container.clientWidth)*2-1; mouse.y=-(e.clientY/container.clientHeight)*2+1;
+  raycaster.setFromCamera(mouse,camera);
+  if(drawMode){
+    const hits=raycaster.intersectObject(rayPlane);
+    if(hits.length){let pt=hits[0].point.clone();if(snapEnabled){pt.x=Math.round(pt.x*2)/2;pt.y=Math.round(pt.y*2)/2;pt.z=Math.round(pt.z*2)/2;}addDrawPt(pt);}
+  } else {
+    if(tCtrl.dragging)return;
+    const hits=raycaster.intersectObjects(objects.filter(o=>o.visible));
+    const hit=hits.length?hits[0].object:null;
+    if(e.shiftKey&&hit){
+      // Shift+click: range-select or add to multiSel
+      rangeSelectTo(hit);
+      // Also add to bond pending (existing behavior)
+      if(!bondPending.includes(hit.uuid)){
+        bondPending.push(hit.uuid);
+        document.getElementById('bond-sel-count').textContent=bondPending.length;
+        document.getElementById('sb-bond').textContent=bondPending.length;
+      }
+    } else if(e.ctrlKey&&hit){
+      toggleMultiSel(hit);
+    } else {
+      multiSel=[]; selectObj(hit);
+    }
+  }
+});
+
+renderer.domElement.addEventListener('mousemove',e=>{
+  mouse.x=(e.clientX/container.clientWidth)*2-1; mouse.y=-(e.clientY/container.clientHeight)*2+1;
+  raycaster.setFromCamera(mouse,camera);
+  const hits=raycaster.intersectObject(rayPlane);
+  if(hits.length){const p=hits[0].point;document.getElementById('sb-coords').textContent=`X:${p.x.toFixed(2)} Y:${p.y.toFixed(2)} Z:${p.z.toFixed(2)}`;}
+});
+
+// ════ MIDDLE MOUSE BUTTON (MMB) ROTATION ════
+let mmb={active:false,x:0,y:0};
+renderer.domElement.addEventListener('mousedown',e=>{
+  if(e.button===1){e.preventDefault();mmb.active=true;mmb.x=e.clientX;mmb.y=e.clientY;}
+});
+renderer.domElement.addEventListener('mousemove',e=>{
+  if(mmb.active){
+    const dx=(e.clientX-mmb.x)*0.01,dy=(e.clientY-mmb.y)*0.01;
+    orbit.rotateLeft(dx);orbit.rotateUp(dy);
+    mmb.x=e.clientX;mmb.y=e.clientY;
+  }
+});
+renderer.domElement.addEventListener('mouseup',e=>{if(e.button===1)mmb.active=false;});
+renderer.domElement.addEventListener('contextmenu',e=>e.preventDefault());
+
+window.addEventListener('resize',()=>{
+  const w=container.clientWidth,h=container.clientHeight;
+  camera.aspect=w/h;camera.updateProjectionMatrix();renderer.setSize(w,h);labelRen.setSize(w,h);
+});
+
+// ═══════════════════════════════════════════
+// STATUS BAR
+// ═══════════════════════════════════════════
+function updateStatusBar(){
+  document.getElementById('sb-objs').textContent=objects.length;
+  document.getElementById('sb-sel').textContent=sel?sel.userData.name:'—';
+}
+
+// ═══════════════════════════════════════════
+// ANIMATE
+// ═══════════════════════════════════════════
+function animate(){
+  requestAnimationFrame(animate); orbit.update();
+  if(sel && outLine){
+    // Recompute outline each frame to track position/rotation/scale changes
+    const box = new THREE.Box3().setFromObject(sel);
+    const sz = new THREE.Vector3(); box.getSize(sz);
+    const center = new THREE.Vector3(); box.getCenter(center);
+    outLine.position.copy(center);
+    outLine.quaternion.copy(sel.quaternion);
+    // Update geometry if size changed
+    const og = outLine.geometry;
+    const ps = og.parameters;
+    if(ps && (Math.abs(ps.width-sz.x)>0.001||Math.abs(ps.height-sz.y)>0.001||Math.abs(ps.depth-sz.z)>0.001)){
+      og.dispose();
+      outLine.geometry = new THREE.EdgesGeometry(new THREE.BoxGeometry(sz.x,sz.y,sz.z));
+    }
+  }
+  renderer.render(scene,camera); labelRen.render(scene,camera);
+}
+
+// ═══════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════
+populateUI(); setMode('translate'); rbPreview(); snapshotState(); animate();
+</script>
+</body>
+</html>
