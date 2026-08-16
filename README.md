@@ -55,7 +55,7 @@ Since this project uses ES6 Modules, you need a local server to run it properly 
     * **Python:** Run `python -m http.server` in the terminal and open `localhost:8000`.
     * **Node.js:** Use `http-server` or similar packages.
 
-## 📸 Screenshots
+##Screenshots
 ![Program Interface](path/to/screenshot.png)
 
 ---
