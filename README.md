@@ -18,7 +18,7 @@ The application is designed to help users calculate the amount of construction m
 * **Nattaphom Chombrisut (ณัฐภูมิ ชมบริสุทธิ์)**
 * **Natnicha Vannachat (ณัฐณิชา วรรณชาติ)**
 
-🎓 **Department of Computer Science (CS)** **Faculty of Liberal Arts and Science** **Kasetsart University (Kamphaeng Saen Campus)**
+**Department of Computer Science (CS)** **Faculty of Liberal Arts and Science** **Kasetsart University (Kamphaeng Saen Campus)**
 
 ## Key Features (ฟีเจอร์หลัก)
 
