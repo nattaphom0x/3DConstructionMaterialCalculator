@@ -3,7 +3,7 @@
 > **Mini Project V1.18: Material Manager (Height Support)**
 > A web-based application for estimating construction materials using interactive 3D modeling.
 
-## 📖 About The Project (เกี่ยวกับโปรเจกต์)
+## About The Project (เกี่ยวกับโปรเจกต์)
 
 This project is a **Pre-Graduation Mini Project** developed by 4th-year students from the **Department of Computer Science, Faculty of Liberal Arts and Science, Kasetsart University.**
 
@@ -13,14 +13,14 @@ The application is designed to help users calculate the amount of construction m
 
 แอปพลิเคชันนี้ถูกพัฒนาขึ้นเพื่อช่วยคำนวณปริมาณวัสดุก่อสร้าง (อิฐ ปูน ทราย) ผ่านการจำลองโมเดล 3 มิติ ผู้ใช้งานสามารถสร้างกำแพง ปรับขนาด และดูการเรียงตัวของอิฐได้จริง พร้อมคำนวณรายการวัสดุ (Bill of Materials) ให้อัตโนมัติ
 
-## 👥 Authors (ผู้จัดทำ)
+## Authors (ผู้จัดทำ)
 
 * **Nattaphom Chombrisut (ณัฐภูมิ ชมบริสุทธิ์)**
 * **Natnicha Vannachat (ณัฐณิชา วรรณชาติ)**
 
-🎓 **Department of Computer Science (CS)** 🏛️ **Faculty of Liberal Arts and Science** 📍 **Kasetsart University (Kamphaeng Saen Campus)**
+🎓 **Department of Computer Science (CS)** **Faculty of Liberal Arts and Science** **Kasetsart University (Kamphaeng Saen Campus)**
 
-## ✨ Key Features (ฟีเจอร์หลัก)
+## Key Features (ฟีเจอร์หลัก)
 
 * **Interactive 3D Workspace:** Move, rotate, and scale walls freely in a 3D environment.
 * **Material Manager:** Customize material properties (Size W/H/L, Gap, Mortar usage).
@@ -32,7 +32,7 @@ The application is designed to help users calculate the amount of construction m
 * **Visualizer Mode:** Toggle between "Solid Wall" view and "Real Unit" view (shows individual bricks stacked).
 * **Bill of Materials (BOM):** Generates a summary report of all materials needed for the project.
 
-## 🛠️ Technologies Used (เทคโนโลยีที่ใช้)
+## Technologies Used (เทคโนโลยีที่ใช้)
 
 * **HTML5 / CSS3** (Responsive GUI)
 * **JavaScript (ES6 Modules)**
@@ -41,7 +41,7 @@ The application is designed to help users calculate the amount of construction m
     * `TransformControls` for object manipulation.
     * `CSS2DRenderer` for floating labels.
 
-## 🚀 How to Run (วิธีใช้งาน)
+## How to Run (วิธีใช้งาน)
 
 Since this project uses ES6 Modules, you need a local server to run it properly (to avoid CORS errors).
 
